@@ -1,0 +1,37 @@
+name: Sync docs from agent-profile-check
+
+on:
+  repository_dispatch:
+    types: [sync-docs]
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Proofly SDK Docs (proofly-sdk-docs)
+        uses: actions/checkout@v4
+
+      - name: Checkout Proofly API (agent-profile-check)
+        uses: actions/checkout@v4
+        with:
+          repository: joinplank/agent-profile-check
+          path: proofly-api
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+
+      - name: Copy docs from Proofly API to Proofly SDK Docs
+        run: |
+          find . -mindepth 1 -maxdepth 1 ! -name '.git' ! -name '.github' -exec rm -rf {} +
+          cp -R proofly-api/apps/docs/api/* .
+
+      - name: Commit and push to Proofly SDK Docs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "Sync docs from agent-profile-check"
+          git push origin main
