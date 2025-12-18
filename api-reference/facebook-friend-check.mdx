@@ -1,0 +1,288 @@
+---
+title: "Facebook Friend Check"
+description: "Verify Facebook friendships and find mutual connections"
+api: "POST /api/facebook-friend-check"
+---
+
+Verify Facebook friendships by checking which profiles from a provided list are friends with a target Facebook profile. This endpoint is useful for identity verification and social graph analysis.
+
+## Endpoints
+
+### Check Facebook Friends
+
+Verify which profiles from a list are friends with a target profile.
+
+<Endpoint method="POST" url="/api/check-facebook-friends" />
+
+<ParamField body="targetFacebookId" type="string" required>
+  The Facebook profile ID of the target user to check friendships against.
+</ParamField>
+
+<ParamField body="candidateIds" type="array" required>
+  Array of Facebook profile IDs to check. Must contain at least one ID.
+</ParamField>
+
+#### Request Example
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://api.proofly.joinplank.com/api/check-facebook-friends \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: sk_your_api_key_here" \
+  -d '{
+    "targetFacebookId": "123456789",
+    "candidateIds": [
+      "987654321",
+      "111222333",
+      "444555666"
+    ]
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.proofly.joinplank.com/api/check-facebook-friends', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-API-Key': 'sk_your_api_key_here'
+  },
+  body: JSON.stringify({
+    targetFacebookId: '123456789',
+    candidateIds: [
+      '987654321',
+      '111222333',
+      '444555666'
+    ]
+  })
+});
+
+const { jobId } = await response.json();
+```
+
+```typescript TypeScript
+interface CheckFriendsRequest {
+  targetFacebookId: string;
+  candidateIds: string[];
+}
+
+const response = await fetch('https://api.proofly.joinplank.com/api/check-facebook-friends', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-API-Key': 'sk_your_api_key_here'
+  },
+  body: JSON.stringify({
+    targetFacebookId: '123456789',
+    candidateIds: [
+      '987654321',
+      '111222333',
+      '444555666'
+    ]
+  } as CheckFriendsRequest)
+});
+
+const { jobId } = await response.json() as { jobId: string };
+```
+
+</CodeGroup>
+
+#### Response
+
+Returns a job ID for asynchronous processing.
+
+**202 Accepted:**
+```json
+{
+  "jobId": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+**Job Result (when completed):**
+```json
+{
+  "friends": [
+    "987654321",
+    "111222333"
+  ]
+}
+```
+
+The `friends` array contains the Facebook IDs from `candidateIds` that are confirmed friends with the `targetFacebookId`.
+
+### Find Mutual Friends
+
+Discover mutual connections between multiple Facebook profiles.
+
+<Endpoint method="POST" url="/api/find-mutual-friends" />
+
+<ParamField body="userIds" type="array" required>
+  Array of Facebook profile IDs. Must contain at least two user IDs to find mutual friends.
+</ParamField>
+
+#### Request Example
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://api.proofly.joinplank.com/api/find-mutual-friends \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: sk_your_api_key_here" \
+  -d '{
+    "userIds": [
+      "123456789",
+      "987654321",
+      "111222333"
+    ]
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.proofly.joinplank.com/api/find-mutual-friends', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-API-Key': 'sk_your_api_key_here'
+  },
+  body: JSON.stringify({
+    userIds: [
+      '123456789',
+      '987654321',
+      '111222333'
+    ]
+  })
+});
+
+const { jobId } = await response.json();
+```
+
+```typescript TypeScript
+interface FindMutualFriendsRequest {
+  userIds: string[];
+}
+
+const response = await fetch('https://api.proofly.joinplank.com/api/find-mutual-friends', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-API-Key': 'sk_your_api_key_here'
+  },
+  body: JSON.stringify({
+    userIds: [
+      '123456789',
+      '987654321',
+      '111222333'
+    ]
+  } as FindMutualFriendsRequest)
+});
+
+const { jobId } = await response.json() as { jobId: string };
+```
+
+</CodeGroup>
+
+#### Response
+
+Returns a job ID for asynchronous processing.
+
+**202 Accepted:**
+```json
+{
+  "jobId": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+**Job Result (when completed):**
+```json
+{
+  "mutualFriends": [
+    "444555666",
+    "777888999"
+  ]
+}
+```
+
+The `mutualFriends` array contains Facebook IDs that are friends with all provided `userIds`.
+
+## Authentication
+
+Both endpoints require API key authentication via the `X-API-Key` header.
+
+## Use Cases
+
+<AccordionGroup>
+  <Accordion title="Identity Verification">
+    Verify that a user's claimed identity matches their social connections by checking if they're friends with known associates.
+  </Accordion>
+  
+  <Accordion title="Social Graph Analysis">
+    Analyze connections between multiple profiles to understand relationship networks.
+  </Accordion>
+  
+  <Accordion title="Fraud Detection">
+    Detect suspicious accounts by checking if they have mutual connections with verified profiles.
+  </Accordion>
+  
+  <Accordion title="Account Linking">
+    Link accounts across different platforms by finding mutual connections.
+  </Accordion>
+</AccordionGroup>
+
+## Error Responses
+
+### 400 Bad Request
+
+Invalid request parameters.
+
+```json
+{
+  "error": "Bad Request",
+  "message": "At least one candidate ID is required"
+}
+```
+
+### 401 Unauthorized
+
+Missing or invalid API key.
+
+```json
+{
+  "error": "Unauthorized",
+  "message": "Invalid API key"
+}
+```
+
+### 500 Internal Server Error
+
+Server error occurred.
+
+```json
+{
+  "error": "Internal Server Error",
+  "message": "An unexpected error occurred"
+}
+```
+
+### 502 Bad Gateway
+
+Service temporarily unavailable.
+
+```json
+{
+  "error": "Bad Gateway",
+  "message": "Service temporarily unavailable"
+}
+```
+
+## Notes
+
+- Both endpoints process requests asynchronously and return job IDs
+- Poll the [Jobs endpoint](/api-reference/jobs) to check status and retrieve results
+- Results depend on the privacy settings of the Facebook profiles being checked
+- Private friend lists may not be accessible, which can affect results
+
+## Related Endpoints
+
+- [Jobs](/api-reference/jobs) - Check job status and retrieve results
+- [Profile Search](/api-reference/profile-search) - Find Facebook profiles before checking friendships
+

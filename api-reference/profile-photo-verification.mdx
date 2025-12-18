@@ -1,0 +1,230 @@
+---
+title: "Profile Photo Verification"
+description: "Verify profile photos using advanced facial recognition"
+api: "POST /api/verify-profile-photo"
+---
+
+Authenticate identity by comparing a provided photo against all photos from a Facebook profile using advanced facial recognition. Returns similarity scores and match confidence. Ideal for identity verification workflows and KYC processes.
+
+<Endpoint method="POST" url="/api/verify-profile-photo" />
+
+## Authentication
+
+This endpoint requires API key authentication.
+
+<ParamField body="photoUrl" type="string" required>
+  URL of the photo to verify. Must be a valid, publicly accessible image URL.
+</ParamField>
+
+<ParamField body="profileUrl" type="string" required>
+  Facebook profile URL to compare against. Must be a valid Facebook profile URL (contains 'facebook.com').
+</ParamField>
+
+<ParamField body="additionalInstructions" type="string">
+  Additional instructions to append to the AI prompt for custom verification criteria.
+</ParamField>
+
+## Request Example
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://api.proofly.joinplank.com/api/verify-profile-photo \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: sk_your_api_key_here" \
+  -d '{
+    "photoUrl": "https://example.com/user-photo.jpg",
+    "profileUrl": "https://facebook.com/john.doe",
+    "additionalInstructions": "Focus on facial features and ignore background"
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.proofly.joinplank.com/api/verify-profile-photo', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-API-Key': 'sk_your_api_key_here'
+  },
+  body: JSON.stringify({
+    photoUrl: 'https://example.com/user-photo.jpg',
+    profileUrl: 'https://facebook.com/john.doe',
+    additionalInstructions: 'Focus on facial features and ignore background'
+  })
+});
+
+const { jobId } = await response.json();
+```
+
+```typescript TypeScript
+interface VerifyPhotoRequest {
+  photoUrl: string;
+  profileUrl: string;
+  additionalInstructions?: string;
+}
+
+const response = await fetch('https://api.proofly.joinplank.com/api/verify-profile-photo', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-API-Key': 'sk_your_api_key_here'
+  },
+  body: JSON.stringify({
+    photoUrl: 'https://example.com/user-photo.jpg',
+    profileUrl: 'https://facebook.com/john.doe',
+    additionalInstructions: 'Focus on facial features and ignore background'
+  } as VerifyPhotoRequest)
+});
+
+const { jobId } = await response.json() as { jobId: string };
+```
+
+</CodeGroup>
+
+## Response
+
+This endpoint returns a job ID for asynchronous processing. Poll the [Jobs endpoint](/api-reference/jobs) to get results.
+
+### 202 Accepted
+
+```json
+{
+  "jobId": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+### Job Result (when completed)
+
+When the job status is `completed`, the `resultData` contains:
+
+```json
+{
+  "confidence": 0.92,
+  "justification": "High confidence match. Facial features including eye shape, nose structure, and jawline show strong similarity across all compared photos.",
+  "photoMatch": true,
+  "screenshotUrl": "https://storage.example.com/screenshots/abc123.jpg"
+}
+```
+
+## Response Fields
+
+<ParamField response="confidence" type="number">
+  Confidence score from 0 to 1 indicating the likelihood that the person in `photoUrl` appears in the Facebook profile photos. Higher scores indicate stronger matches.
+</ParamField>
+
+<ParamField response="justification" type="string">
+  Detailed explanation of the verification result, including reasoning and which features were compared.
+</ParamField>
+
+<ParamField response="photoMatch" type="boolean">
+  Whether the AI believes the person appears in the profile photos. `true` indicates a match, `false` indicates no match or insufficient confidence.
+</ParamField>
+
+<ParamField response="screenshotUrl" type="string">
+  Optional URL of a screenshot saved to storage for visual review. Available when a screenshot was captured during verification.
+</ParamField>
+
+## Confidence Scores
+
+The confidence score indicates match quality:
+
+- **0.8 - 1.0**: High confidence - Strong match, likely the same person
+- **0.6 - 0.79**: Medium confidence - Moderate match, review recommended
+- **0.4 - 0.59**: Low confidence - Weak match, may not be the same person
+- **0.0 - 0.39**: Very low confidence - Unlikely to be the same person
+
+<Warning>
+Confidence scores are estimates based on AI analysis. Always review results in context and consider additional verification methods for critical use cases.
+</Warning>
+
+## Error Responses
+
+### 400 Bad Request
+
+Invalid request parameters.
+
+```json
+{
+  "error": "Bad Request",
+  "message": "photoUrl must be a valid URL"
+}
+```
+
+### 401 Unauthorized
+
+Missing or invalid API key.
+
+```json
+{
+  "error": "Unauthorized",
+  "message": "Invalid API key"
+}
+```
+
+### 500 Internal Server Error
+
+Server error occurred.
+
+```json
+{
+  "error": "Internal Server Error",
+  "message": "An unexpected error occurred"
+}
+```
+
+### 502 Bad Gateway
+
+Service temporarily unavailable.
+
+```json
+{
+  "error": "Bad Gateway",
+  "message": "Service temporarily unavailable"
+}
+```
+
+## Use Cases
+
+<AccordionGroup>
+  <Accordion title="Identity Verification">
+    Verify that a user's submitted photo matches their Facebook profile for KYC and identity verification processes.
+  </Accordion>
+  
+  <Accordion title="Account Security">
+    Verify user identity during account recovery or sensitive operations.
+  </Accordion>
+  
+  <Accordion title="Profile Matching">
+    Match user-submitted photos with social media profiles to verify claimed identities.
+  </Accordion>
+  
+  <Accordion title="Fraud Prevention">
+    Detect fake accounts by comparing submitted photos with profile photos.
+  </Accordion>
+</AccordionGroup>
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Use High-Quality Photos">
+    Provide clear, front-facing photos for best results. Blurry or low-resolution images may reduce accuracy.
+  </Accordion>
+  
+  <Accordion title="Check Confidence Thresholds">
+    Set appropriate confidence thresholds for your use case. Critical verifications may require scores above 0.8.
+  </Accordion>
+  
+  <Accordion title="Review Justifications">
+    Always review the `justification` field to understand why a match was or wasn't found.
+  </Accordion>
+  
+  <Accordion title="Handle Edge Cases">
+    Consider cases where profiles have no photos, private photos, or very old photos that may not match current appearance.
+  </Accordion>
+</AccordionGroup>
+
+## Related Endpoints
+
+- [Jobs](/api-reference/jobs) - Check job status and retrieve results
+- [Profile Search](/api-reference/profile-search) - Find profiles before verifying photos
+

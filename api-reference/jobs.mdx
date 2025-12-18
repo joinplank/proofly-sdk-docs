@@ -1,0 +1,324 @@
+---
+title: "Jobs"
+description: "Check the status of asynchronous jobs and retrieve results"
+api: "GET /api/jobs/:jobId"
+---
+
+Retrieve the current status and results of an asynchronous job. Most API operations return a job ID that you can poll to get results when processing completes.
+
+<Endpoint method="GET" url="/api/jobs/:jobId" />
+
+## Authentication
+
+This endpoint requires API key authentication.
+
+<ParamField path="jobId" type="string" required>
+  The UUID of the job to check. Provided in the response when you submit an async operation.
+</ParamField>
+
+## Request Example
+
+<CodeGroup>
+
+```bash cURL
+curl -X GET https://api.proofly.joinplank.com/api/jobs/550e8400-e29b-41d4-a716-446655440000 \
+  -H "X-API-Key: sk_your_api_key_here"
+```
+
+```javascript JavaScript
+const jobId = '550e8400-e29b-41d4-a716-446655440000';
+
+const response = await fetch(`https://api.proofly.joinplank.com/api/jobs/${jobId}`, {
+  headers: {
+    'X-API-Key': 'sk_your_api_key_here'
+  }
+});
+
+const job = await response.json();
+```
+
+```typescript TypeScript
+interface JobStatus {
+  id: string;
+  status: 'queued' | 'processing' | 'completed' | 'failed' | 'waiting_for_browser';
+  jobType: 'profile_search' | 'check_friends' | 'find_mutual_friends' | 'verify_profile_photo';
+  environment: string;
+  resultData?: any;
+  errorMessage?: string;
+  createdAt: string;
+  startedAt: string | null;
+  completedAt: string | null;
+  browserId?: string;
+  browser?: {
+    id: string;
+    kernelBrowserId: string;
+    status: 'idle' | 'busy';
+    lastUsedAt: string | null;
+  };
+}
+
+const jobId = '550e8400-e29b-41d4-a716-446655440000';
+
+const response = await fetch(`https://api.proofly.joinplank.com/api/jobs/${jobId}`, {
+  headers: {
+    'X-API-Key': 'sk_your_api_key_here'
+  }
+});
+
+const job = await response.json() as JobStatus;
+```
+
+</CodeGroup>
+
+## Response
+
+### 200 OK
+
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "status": "completed",
+  "jobType": "profile_search",
+  "environment": "PROD",
+  "resultData": {
+    "primaryMatch": {
+      "facebookId": "123456789",
+      "fullName": "John Doe",
+      "confidence": 0.95
+    },
+    "candidates": []
+  },
+  "errorMessage": null,
+  "createdAt": "2024-01-15T10:00:00Z",
+  "startedAt": "2024-01-15T10:00:05Z",
+  "completedAt": "2024-01-15T10:00:30Z",
+  "browserId": "660e8400-e29b-41d4-a716-446655440001",
+  "browser": {
+    "id": "660e8400-e29b-41d4-a716-446655440001",
+    "kernelBrowserId": "browser-123",
+    "status": "idle",
+    "lastUsedAt": "2024-01-15T10:00:30Z"
+  }
+}
+```
+
+## Response Fields
+
+<ParamField response="id" type="string">
+  The unique identifier (UUID) of the job.
+</ParamField>
+
+<ParamField response="status" type="string">
+  Current status of the job:
+  - `queued` - Job is waiting to be processed
+  - `waiting_for_browser` - Job is waiting for a browser instance to become available
+  - `processing` - Job is currently being processed
+  - `completed` - Job completed successfully, results available in `resultData`
+  - `failed` - Job failed, error details in `errorMessage`
+</ParamField>
+
+<ParamField response="jobType" type="string">
+  Type of job:
+  - `profile_search` - Profile search operation
+  - `check_friends` - Facebook friend check
+  - `find_mutual_friends` - Mutual friends search
+  - `verify_profile_photo` - Profile photo verification
+</ParamField>
+
+<ParamField response="environment" type="string">
+  Environment where the job is running (e.g., "DEV", "PROD").
+</ParamField>
+
+<ParamField response="resultData" type="object">
+  The result data when status is `completed`. Structure varies by job type. See specific endpoint documentation for result formats.
+</ParamField>
+
+<ParamField response="errorMessage" type="string">
+  Error message if status is `failed`, null otherwise.
+</ParamField>
+
+<ParamField response="createdAt" type="string">
+  ISO 8601 timestamp when the job was created.
+</ParamField>
+
+<ParamField response="startedAt" type="string">
+  ISO 8601 timestamp when processing started, null if not started yet.
+</ParamField>
+
+<ParamField response="completedAt" type="string">
+  ISO 8601 timestamp when processing completed, null if not completed yet.
+</ParamField>
+
+<ParamField response="browserId" type="string">
+  UUID of the browser instance used for processing (if applicable).
+</ParamField>
+
+<ParamField response="browser" type="object">
+  Browser instance details (if applicable):
+  - `id` - Browser UUID
+  - `kernelBrowserId` - Internal browser identifier
+  - `status` - Browser status: `idle` or `busy`
+  - `lastUsedAt` - Last usage timestamp
+</ParamField>
+
+## Job Statuses
+
+### Queued
+
+Job is waiting in the queue to be processed. Continue polling.
+
+### Waiting for Browser
+
+Job is waiting for an available browser instance. This status indicates the system is busy but will process your job when resources become available.
+
+### Processing
+
+Job is actively being processed. Continue polling until status changes to `completed` or `failed`.
+
+### Completed
+
+Job finished successfully. Results are available in the `resultData` field. The structure of `resultData` depends on the job type:
+
+- **Profile Search**: See [Profile Search documentation](/api-reference/profile-search)
+- **Friend Check**: See [Facebook Friend Check documentation](/api-reference/facebook-friend-check)
+- **Photo Verification**: See [Profile Photo Verification documentation](/api-reference/profile-photo-verification)
+
+### Failed
+
+Job encountered an error. Check the `errorMessage` field for details. Common causes:
+
+- Invalid input parameters
+- Service unavailable
+- Timeout
+- Browser errors
+
+## Polling Strategy
+
+Poll the job status endpoint periodically until the job completes or fails. Recommended approach:
+
+<CodeGroup>
+
+```javascript JavaScript
+async function pollJobStatus(jobId, apiKey, maxAttempts = 60) {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const response = await fetch(`https://api.proofly.joinplank.com/api/jobs/${jobId}`, {
+      headers: { 'X-API-Key': apiKey }
+    });
+    
+    const job = await response.json();
+    
+    if (job.status === 'completed') {
+      return job.resultData;
+    } else if (job.status === 'failed') {
+      throw new Error(job.errorMessage || 'Job failed');
+    }
+    
+    // Wait 2 seconds before next poll
+    await new Promise(resolve => setTimeout(resolve, 2000));
+  }
+  
+  throw new Error('Job polling timeout');
+}
+```
+
+```typescript TypeScript
+async function pollJobStatus(
+  jobId: string, 
+  apiKey: string, 
+  maxAttempts: number = 60
+): Promise<any> {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const response = await fetch(`https://api.proofly.joinplank.com/api/jobs/${jobId}`, {
+      headers: { 'X-API-Key': apiKey }
+    });
+    
+    const job = await response.json() as JobStatus;
+    
+    if (job.status === 'completed') {
+      return job.resultData;
+    } else if (job.status === 'failed') {
+      throw new Error(job.errorMessage || 'Job failed');
+    }
+    
+    // Wait 2 seconds before next poll
+    await new Promise(resolve => setTimeout(resolve, 2000));
+  }
+  
+  throw new Error('Job polling timeout');
+}
+```
+
+</CodeGroup>
+
+### Polling Recommendations
+
+- **Poll Interval**: 2-5 seconds is recommended
+- **Timeout**: Most jobs complete within 30-60 seconds, but some may take longer
+- **Exponential Backoff**: Consider increasing poll interval for long-running jobs
+- **Max Attempts**: Set a reasonable maximum (e.g., 60 attempts = 2 minutes at 2s intervals)
+
+## Error Responses
+
+### 404 Not Found
+
+Job ID not found.
+
+```json
+{
+  "error": "Not Found",
+  "message": "Job not found"
+}
+```
+
+### 401 Unauthorized
+
+Missing or invalid API key.
+
+```json
+{
+  "error": "Unauthorized",
+  "message": "Invalid API key"
+}
+```
+
+### 500 Internal Server Error
+
+Server error occurred.
+
+```json
+{
+  "error": "Internal Server Error",
+  "message": "An unexpected error occurred"
+}
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Use SDK for Polling">
+    The official SDK handles job polling automatically. Consider using it instead of manual polling.
+  </Accordion>
+  
+  <Accordion title="Handle All Statuses">
+    Implement handling for all status values, including `waiting_for_browser` which may take longer.
+  </Accordion>
+  
+  <Accordion title="Set Reasonable Timeouts">
+    Set appropriate timeouts based on your use case. Most jobs complete quickly, but allow for edge cases.
+  </Accordion>
+  
+  <Accordion title="Log Job IDs">
+    Store job IDs in your system for debugging and tracking purposes.
+  </Accordion>
+  
+  <Accordion title="Handle Failures Gracefully">
+    When a job fails, log the error message and provide appropriate feedback to users.
+  </Accordion>
+</AccordionGroup>
+
+## Related Endpoints
+
+- [Profile Search](/api-reference/profile-search) - Creates profile search jobs
+- [Facebook Friend Check](/api-reference/facebook-friend-check) - Creates friend check jobs
+- [Profile Photo Verification](/api-reference/profile-photo-verification) - Creates photo verification jobs
+

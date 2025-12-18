@@ -1,0 +1,305 @@
+---
+title: "Profile Search"
+description: "Search for Facebook profiles using intelligent multi-factor matching"
+api: "POST /api/profiles/search"
+---
+
+Find the most accurate Facebook profile match using intelligent multi-factor search. This endpoint combines fuzzy name matching, demographic filters (location, workplace, education), and optional facial recognition for maximum accuracy.
+
+<Endpoint method="POST" url="/api/profiles/search" />
+
+## Authentication
+
+This endpoint requires API key authentication.
+
+<ParamField body="name" type="string" required>
+  The name of the person to search for. Minimum 1 character.
+</ParamField>
+
+<ParamField body="email" type="string">
+  Email address associated with the profile (optional).
+</ParamField>
+
+<ParamField body="birthYear" type="number">
+  Birth year (e.g., 1990). Must be between 1900 and current year.
+</ParamField>
+
+<ParamField body="dateOfBirth" type="string">
+  Full date of birth in ISO format (YYYY-MM-DD), e.g., "1990-05-15".
+</ParamField>
+
+<ParamField body="location" type="string">
+  Location to search (city, state, country, etc.). Minimum 2 characters.
+</ParamField>
+
+<ParamField body="subCategory" type="string">
+  Location category: `"hometown"` or `"current"`. Used when location is provided.
+</ParamField>
+
+<ParamField body="photoUrl" type="string">
+  URL of a photo to compare against profile photos for facial recognition matching.
+</ParamField>
+
+<ParamField body="knownAssociates" type="array">
+  Array of Facebook profile URLs or IDs of known associates (mutual friends, connections). Maximum 20 items.
+</ParamField>
+
+<ParamField body="additionalInstructions" type="string">
+  Additional instructions to append to the AI prompt for custom search criteria.
+</ParamField>
+
+## Request Example
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://api.proofly.joinplank.com/api/profiles/search \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: sk_your_api_key_here" \
+  -d '{
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "birthYear": 1990,
+    "location": "New York, NY",
+    "subCategory": "current",
+    "photoUrl": "https://example.com/photo.jpg",
+    "knownAssociates": [
+      "https://facebook.com/profile1",
+      "https://facebook.com/profile2"
+    ]
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.proofly.joinplank.com/api/profiles/search', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-API-Key': 'sk_your_api_key_here'
+  },
+  body: JSON.stringify({
+    name: 'John Doe',
+    email: 'john.doe@example.com',
+    birthYear: 1990,
+    location: 'New York, NY',
+    subCategory: 'current',
+    photoUrl: 'https://example.com/photo.jpg',
+    knownAssociates: [
+      'https://facebook.com/profile1',
+      'https://facebook.com/profile2'
+    ]
+  })
+});
+
+const { jobId } = await response.json();
+```
+
+```typescript TypeScript
+interface ProfileSearchRequest {
+  name: string;
+  email?: string;
+  birthYear?: number;
+  dateOfBirth?: string;
+  location?: string;
+  subCategory?: 'hometown' | 'current';
+  photoUrl?: string;
+  knownAssociates?: string[];
+  additionalInstructions?: string;
+}
+
+const response = await fetch('https://api.proofly.joinplank.com/api/profiles/search', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-API-Key': 'sk_your_api_key_here'
+  },
+  body: JSON.stringify({
+    name: 'John Doe',
+    email: 'john.doe@example.com',
+    birthYear: 1990,
+    location: 'New York, NY',
+    subCategory: 'current',
+    photoUrl: 'https://example.com/photo.jpg',
+    knownAssociates: [
+      'https://facebook.com/profile1',
+      'https://facebook.com/profile2'
+    ]
+  } as ProfileSearchRequest)
+});
+
+const { jobId } = await response.json() as { jobId: string };
+```
+
+</CodeGroup>
+
+## Response
+
+This endpoint returns a job ID for asynchronous processing. Poll the [Jobs endpoint](/api-reference/jobs) to get results.
+
+### 202 Accepted
+
+```json
+{
+  "jobId": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+### Job Result (when completed)
+
+When the job status is `completed`, the `resultData` contains:
+
+```json
+{
+  "primaryMatch": {
+    "facebookId": "123456789",
+    "fullName": "John Doe",
+    "profileUrl": "https://facebook.com/john.doe",
+    "location": "New York, NY",
+    "hometown": "Boston, MA",
+    "photoUrl": "https://facebook.com/photo.jpg",
+    "birthYear": 1990,
+    "confidence": 0.95,
+    "matchedSignals": [
+      "name_match",
+      "location_match",
+      "birth_year_match",
+      "photo_match"
+    ],
+    "imageMatch": {
+      "isSamePerson": true,
+      "confidence": 92,
+      "message": "High confidence match based on facial features"
+    }
+  },
+  "candidates": [
+    {
+      "facebookId": "123456789",
+      "fullName": "John Doe",
+      "profileUrl": "https://facebook.com/john.doe",
+      "confidence": 0.95,
+      "matchedSignals": ["name_match", "location_match"],
+      "imageMatch": {
+        "isSamePerson": true,
+        "confidence": 92
+      }
+    }
+  ],
+  "connections": [
+    {
+      "fromId": "123456789",
+      "toId": "987654321",
+      "relationship": "mutual_friend",
+      "strength": 0.8,
+      "context": "Both connected to Jane Smith"
+    }
+  ]
+}
+```
+
+## Response Fields
+
+### Primary Match
+
+The `primaryMatch` field contains the best matching profile:
+
+- `facebookId` - Facebook profile ID
+- `fullName` - Full name from profile
+- `profileUrl` - URL to the Facebook profile
+- `location` - Current location
+- `hometown` - Hometown location
+- `photoUrl` - Profile photo URL
+- `birthYear` - Birth year if available
+- `confidence` - Confidence score (0-1) indicating match quality
+- `matchedSignals` - Array of signals that matched (e.g., "name_match", "location_match")
+- `imageMatch` - Facial recognition results (if photoUrl provided)
+  - `isSamePerson` - Whether AI believes it's the same person
+  - `confidence` - Confidence score (0-100)
+  - `message` - Explanation of the match
+
+### Candidates
+
+Array of all candidate profiles found, sorted by confidence score.
+
+### Connections
+
+Array of relationships between profiles:
+- `relationship` - Type: `"known_associate"`, `"mutual_friend"`, or `"location_overlap"`
+- `strength` - Relationship strength (0-1)
+- `context` - Additional context about the relationship
+
+## Error Responses
+
+### 400 Bad Request
+
+Invalid request parameters.
+
+```json
+{
+  "error": "Bad Request",
+  "message": "Name is required"
+}
+```
+
+### 401 Unauthorized
+
+Missing or invalid API key.
+
+```json
+{
+  "error": "Unauthorized",
+  "message": "Invalid API key"
+}
+```
+
+### 500 Internal Server Error
+
+Server error occurred.
+
+```json
+{
+  "error": "Internal Server Error",
+  "message": "An unexpected error occurred"
+}
+```
+
+### 502 Bad Gateway
+
+Service temporarily unavailable.
+
+```json
+{
+  "error": "Bad Gateway",
+  "message": "Service temporarily unavailable"
+}
+```
+
+## Usage Tips
+
+<AccordionGroup>
+  <Accordion title="Provide Multiple Signals">
+    The more information you provide (name, location, birth year, photo), the more accurate the results will be.
+  </Accordion>
+  
+  <Accordion title="Use Photo URLs for Better Matching">
+    Including a `photoUrl` enables facial recognition matching, which significantly improves accuracy.
+  </Accordion>
+  
+  <Accordion title="Include Known Associates">
+    Providing `knownAssociates` helps narrow down results by leveraging social graph connections.
+  </Accordion>
+  
+  <Accordion title="Check Confidence Scores">
+    Use the `confidence` score to determine match quality. Scores above 0.8 are typically reliable.
+  </Accordion>
+  
+  <Accordion title="Poll Job Status">
+    Remember to poll the job status endpoint to retrieve results. See the [Jobs documentation](/api-reference/jobs) for details.
+  </Accordion>
+</AccordionGroup>
+
+## Related Endpoints
+
+- [Jobs](/api-reference/jobs) - Check job status and retrieve results
+- [Fuzzy Search](/api-reference/fuzzy-search) - Get name/location suggestions before searching
+- [Profile Photo Verification](/api-reference/profile-photo-verification) - Verify a photo matches a profile
+

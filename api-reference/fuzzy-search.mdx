@@ -1,0 +1,370 @@
+---
+title: "Fuzzy Search"
+description: "Generate intelligent suggestions for names, locations, occupations, and emails"
+api: "POST /api/fuzzy-search"
+---
+
+Generate fuzzy suggestions for names, locations, occupations, or emails to improve search accuracy. This endpoint uses AI to normalize and suggest variations of input values.
+
+## Endpoints
+
+### Single Fuzzy Search
+
+Search for a single value and get suggestions.
+
+<Endpoint method="POST" url="/api/fuzzy-search" />
+
+<ParamField body="type" type="string" required>
+  Type of value to search: `"name"`, `"location"`, `"occupation"`, or `"email"`.
+</ParamField>
+
+<ParamField body="value" type="string" required>
+  The value to get suggestions for. Minimum 1 character.
+</ParamField>
+
+<ParamField body="context" type="object">
+  Optional context to improve suggestions:
+  - `hint` - Additional hint to guide suggestions
+  - `subCategory` - For locations: `"hometown"` or `"current"`
+</ParamField>
+
+<ParamField body="additionalInstructions" type="string">
+  Additional instructions to append to the AI prompt for custom search criteria.
+</ParamField>
+
+#### Request Example
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://api.proofly.joinplank.com/api/fuzzy-search \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: sk_your_api_key_here" \
+  -d '{
+    "type": "name",
+    "value": "Jon Doe",
+    "context": {
+      "hint": "Common variations"
+    }
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.proofly.joinplank.com/api/fuzzy-search', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-API-Key': 'sk_your_api_key_here'
+  },
+  body: JSON.stringify({
+    type: 'name',
+    value: 'Jon Doe',
+    context: {
+      hint: 'Common variations'
+    }
+  })
+});
+
+const result = await response.json();
+```
+
+```typescript TypeScript
+interface FuzzySearchRequest {
+  type: 'name' | 'location' | 'occupation' | 'email';
+  value: string;
+  context?: {
+    hint?: string;
+    subCategory?: 'hometown' | 'current';
+  };
+  additionalInstructions?: string;
+}
+
+const response = await fetch('https://api.proofly.joinplank.com/api/fuzzy-search', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-API-Key': 'sk_your_api_key_here'
+  },
+  body: JSON.stringify({
+    type: 'name',
+    value: 'Jon Doe',
+    context: {
+      hint: 'Common variations'
+    }
+  } as FuzzySearchRequest)
+});
+
+const result = await response.json();
+```
+
+</CodeGroup>
+
+#### Response
+
+**200 OK:**
+```json
+{
+  "type": "name",
+  "originalValue": "Jon Doe",
+  "suggestions": [
+    "John Doe",
+    "Jonathan Doe",
+    "Jonathon Doe"
+  ],
+  "normalizedValue": "John Doe"
+}
+```
+
+### Batch Fuzzy Search
+
+Search for multiple values in a single request for efficiency.
+
+<Endpoint method="POST" url="/api/fuzzy-search/batch" />
+
+<ParamField body="requests" type="array" required>
+  Array of fuzzy search requests. Must contain 1-10 requests.
+</ParamField>
+
+#### Request Example
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://api.proofly.joinplank.com/api/fuzzy-search/batch \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: sk_your_api_key_here" \
+  -d '{
+    "requests": [
+      {
+        "type": "name",
+        "value": "Jon Doe"
+      },
+      {
+        "type": "location",
+        "value": "NYC",
+        "context": {
+          "subCategory": "current"
+        }
+      },
+      {
+        "type": "email",
+        "value": "john.doe@gmial.com"
+      }
+    ]
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.proofly.joinplank.com/api/fuzzy-search/batch', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-API-Key': 'sk_your_api_key_here'
+  },
+  body: JSON.stringify({
+    requests: [
+      {
+        type: 'name',
+        value: 'Jon Doe'
+      },
+      {
+        type: 'location',
+        value: 'NYC',
+        context: {
+          subCategory: 'current'
+        }
+      },
+      {
+        type: 'email',
+        value: 'john.doe@gmial.com'
+      }
+    ]
+  })
+});
+
+const result = await response.json();
+```
+
+```typescript TypeScript
+interface FuzzySearchBatchRequest {
+  requests: Array<{
+    type: 'name' | 'location' | 'occupation' | 'email';
+    value: string;
+    context?: {
+      hint?: string;
+      subCategory?: 'hometown' | 'current';
+    };
+    additionalInstructions?: string;
+  }>;
+}
+
+const response = await fetch('https://api.proofly.joinplank.com/api/fuzzy-search/batch', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-API-Key': 'sk_your_api_key_here'
+  },
+  body: JSON.stringify({
+    requests: [
+      {
+        type: 'name',
+        value: 'Jon Doe'
+      },
+      {
+        type: 'location',
+        value: 'NYC',
+        context: {
+          subCategory: 'current'
+        }
+      },
+      {
+        type: 'email',
+        value: 'john.doe@gmial.com'
+      }
+    ]
+  } as FuzzySearchBatchRequest)
+});
+
+const result = await response.json();
+```
+
+</CodeGroup>
+
+#### Response
+
+**200 OK:**
+```json
+{
+  "results": [
+    {
+      "type": "name",
+      "originalValue": "Jon Doe",
+      "suggestions": [
+        "John Doe",
+        "Jonathan Doe"
+      ],
+      "normalizedValue": "John Doe"
+    },
+    {
+      "type": "location",
+      "originalValue": "NYC",
+      "suggestions": [
+        "New York, NY",
+        "New York City, NY",
+        "NYC, New York"
+      ],
+      "normalizedValue": "New York, NY"
+    },
+    {
+      "type": "email",
+      "originalValue": "john.doe@gmial.com",
+      "suggestions": [
+        "john.doe@gmail.com"
+      ],
+      "normalizedValue": "john.doe@gmail.com"
+    }
+  ]
+}
+```
+
+## Response Fields
+
+<ParamField response="type" type="string">
+  The type of search performed: `"name"`, `"location"`, `"occupation"`, or `"email"`.
+</ParamField>
+
+<ParamField response="originalValue" type="string">
+  The original input value.
+</ParamField>
+
+<ParamField response="suggestions" type="array">
+  Array of suggested variations or corrections for the input value.
+</ParamField>
+
+<ParamField response="normalizedValue" type="string">
+  The best normalized/corrected version of the input value, if available.
+</ParamField>
+
+## Authentication
+
+The single search endpoint does not require authentication. The batch endpoint may require authentication depending on your configuration.
+
+## Use Cases
+
+<AccordionGroup>
+  <Accordion title="Name Normalization">
+    Normalize user-entered names to handle typos, nicknames, and variations (e.g., "Jon" → "John", "Bob" → "Robert").
+  </Accordion>
+  
+  <Accordion title="Location Standardization">
+    Standardize location inputs to consistent formats (e.g., "NYC" → "New York, NY").
+  </Accordion>
+  
+  <Accordion title="Email Correction">
+    Correct common email typos (e.g., "gmial.com" → "gmail.com").
+  </Accordion>
+  
+  <Accordion title="Pre-Search Preparation">
+    Use fuzzy search results to improve accuracy of profile searches by using normalized values.
+  </Accordion>
+</AccordionGroup>
+
+## Error Responses
+
+### 400 Bad Request
+
+Invalid request parameters.
+
+```json
+{
+  "error": "Bad Request",
+  "message": "Value is required"
+}
+```
+
+### 500 Internal Server Error
+
+Server error occurred.
+
+```json
+{
+  "error": "Internal Server Error",
+  "message": "An unexpected error occurred"
+}
+```
+
+### 502 Bad Gateway
+
+Service temporarily unavailable.
+
+```json
+{
+  "error": "Bad Gateway",
+  "message": "Service temporarily unavailable"
+}
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Use Before Profile Search">
+    Run fuzzy search on user inputs before performing profile searches to improve match accuracy.
+  </Accordion>
+  
+  <Accordion title="Use Batch for Multiple Values">
+    When processing multiple values, use the batch endpoint for better performance.
+  </Accordion>
+  
+  <Accordion title="Review Suggestions">
+    Always review suggestions and use the `normalizedValue` when available for best results.
+  </Accordion>
+  
+  <Accordion title="Provide Context">
+    Include context hints when available to improve suggestion quality.
+  </Accordion>
+</AccordionGroup>
+
+## Related Endpoints
+
+- [Profile Search](/api-reference/profile-search) - Use normalized values for better search results
+

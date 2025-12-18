@@ -1,0 +1,323 @@
+---
+title: "Error Handling"
+description: "Understand and handle API errors"
+---
+
+## Overview
+
+The Proofly API uses standard HTTP status codes to indicate success or failure. All error responses follow a consistent format.
+
+## Error Response Format
+
+All error responses use this structure:
+
+```json
+{
+  "error": "ErrorType",
+  "message": "Human-readable error message describing what went wrong"
+}
+```
+
+## HTTP Status Codes
+
+### 200 OK
+
+Request succeeded. Response contains the requested data.
+
+### 202 Accepted
+
+Request accepted for asynchronous processing. Response contains a `jobId` to poll for results.
+
+```json
+{
+  "jobId": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+### 400 Bad Request
+
+The request was invalid. Common causes:
+
+- Missing required parameters
+- Invalid parameter types or formats
+- Parameter validation failures
+
+**Example:**
+```json
+{
+  "error": "Bad Request",
+  "message": "Name is required"
+}
+```
+
+**How to fix:**
+- Check that all required fields are provided
+- Verify parameter types match the API specification
+- Review validation rules for each field
+
+### 401 Unauthorized
+
+Authentication failed. Common causes:
+
+- Missing API key
+- Invalid API key
+- Expired Bearer token
+
+**Example:**
+```json
+{
+  "error": "Unauthorized",
+  "message": "Invalid API key"
+}
+```
+
+**How to fix:**
+- Verify your API key is correct and starts with `sk_`
+- Check that the `X-API-Key` header is included
+- For Bearer token endpoints, ensure the token is valid and not expired
+- Regenerate your API key if needed
+
+### 403 Forbidden
+
+The request is valid but the API key doesn't have permission for the requested resource.
+
+**Example:**
+```json
+{
+  "error": "Forbidden",
+  "message": "Insufficient permissions"
+}
+```
+
+**How to fix:**
+- Verify your API key has the required permissions
+- Check if your account has access to the requested feature
+- Contact support if you believe you should have access
+
+### 404 Not Found
+
+The requested resource was not found.
+
+**Example:**
+```json
+{
+  "error": "Not Found",
+  "message": "Job not found"
+}
+```
+
+**How to fix:**
+- Verify the resource ID (e.g., job ID) is correct
+- Check that the resource exists and belongs to your account
+- Ensure you're using the correct endpoint URL
+
+### 429 Too Many Requests
+
+Rate limit exceeded. You've made too many requests in a short period.
+
+**Example:**
+```json
+{
+  "error": "Too Many Requests",
+  "message": "Rate limit exceeded. Please try again later."
+}
+```
+
+**How to fix:**
+- Wait before making additional requests
+- Check rate limit headers to see when you can retry:
+  - `X-RateLimit-Limit`: Maximum requests allowed
+  - `X-RateLimit-Remaining`: Remaining requests
+  - `X-RateLimit-Reset`: Timestamp when limit resets
+- Implement exponential backoff in your retry logic
+- Consider upgrading your plan for higher rate limits
+
+### 500 Internal Server Error
+
+An unexpected server error occurred.
+
+**Example:**
+```json
+{
+  "error": "Internal Server Error",
+  "message": "An unexpected error occurred"
+}
+```
+
+**How to fix:**
+- Retry the request after a short delay
+- If the error persists, check our status page
+- Contact support with the request details
+
+### 502 Bad Gateway
+
+The service is temporarily unavailable, often due to maintenance or high load.
+
+**Example:**
+```json
+{
+  "error": "Bad Gateway",
+  "message": "Service temporarily unavailable"
+}
+```
+
+**How to fix:**
+- Retry the request after a few seconds
+- Check our status page for service updates
+- If the issue persists, contact support
+
+## Job-Specific Errors
+
+When polling job status, jobs can fail with specific error messages:
+
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "status": "failed",
+  "errorMessage": "Profile not found or inaccessible",
+  "jobType": "profile_search"
+}
+```
+
+Common job error messages:
+
+- **"Profile not found or inaccessible"** - The Facebook profile doesn't exist or is private
+- **"Browser timeout"** - The operation took too long and timed out
+- **"Invalid input parameters"** - The job was created with invalid parameters
+- **"Service unavailable"** - Required services were unavailable during processing
+
+## Error Handling Best Practices
+
+<AccordionGroup>
+  <Accordion title="Implement Retry Logic">
+    For transient errors (500, 502, 429), implement retry logic with exponential backoff.
+  </Accordion>
+  
+  <Accordion title="Log Error Details">
+    Log error responses including status code, error type, and message for debugging.
+  </Accordion>
+  
+  <Accordion title="Handle Each Status Code">
+    Implement specific handling for each status code rather than treating all errors the same.
+  </Accordion>
+  
+  <Accordion title="Provide User-Friendly Messages">
+    Translate technical error messages into user-friendly explanations when displaying to end users.
+  </Accordion>
+  
+  <Accordion title="Validate Before Sending">
+    Validate request parameters client-side before sending to avoid 400 errors.
+  </Accordion>
+  
+  <Accordion title="Monitor Rate Limits">
+    Track rate limit headers and adjust request frequency to avoid 429 errors.
+  </Accordion>
+</AccordionGroup>
+
+## Example Error Handling
+
+<CodeGroup>
+
+```javascript JavaScript
+async function makeApiRequest(url, options) {
+  try {
+    const response = await fetch(url, options);
+    
+    if (!response.ok) {
+      const error = await response.json();
+      
+      switch (response.status) {
+        case 400:
+          throw new Error(`Invalid request: ${error.message}`);
+        case 401:
+          throw new Error('Authentication failed. Check your API key.');
+        case 403:
+          throw new Error('Access forbidden. Check your permissions.');
+        case 404:
+          throw new Error('Resource not found.');
+        case 429:
+          const retryAfter = response.headers.get('Retry-After');
+          throw new Error(`Rate limit exceeded. Retry after: ${retryAfter}s`);
+        case 500:
+        case 502:
+          // Retry transient errors
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          return makeApiRequest(url, options);
+        default:
+          throw new Error(`API error: ${error.message}`);
+      }
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('API request failed:', error);
+    throw error;
+  }
+}
+```
+
+```typescript TypeScript
+interface ApiError {
+  error: string;
+  message: string;
+}
+
+async function makeApiRequest<T>(url: string, options: RequestInit): Promise<T> {
+  try {
+    const response = await fetch(url, options);
+    
+    if (!response.ok) {
+      const error = await response.json() as ApiError;
+      
+      switch (response.status) {
+        case 400:
+          throw new Error(`Invalid request: ${error.message}`);
+        case 401:
+          throw new Error('Authentication failed. Check your API key.');
+        case 403:
+          throw new Error('Access forbidden. Check your permissions.');
+        case 404:
+          throw new Error('Resource not found.');
+        case 429:
+          const retryAfter = response.headers.get('Retry-After');
+          throw new Error(`Rate limit exceeded. Retry after: ${retryAfter}s`);
+        case 500:
+        case 502:
+          // Retry transient errors
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          return makeApiRequest<T>(url, options);
+        default:
+          throw new Error(`API error: ${error.message}`);
+      }
+    }
+    
+    return await response.json() as T;
+  } catch (error) {
+    console.error('API request failed:', error);
+    throw error;
+  }
+}
+```
+
+</CodeGroup>
+
+## Getting Help
+
+If you encounter errors you can't resolve:
+
+1. **Check the documentation** - Review the endpoint documentation for requirements
+2. **Verify your request** - Ensure all required parameters are included and correctly formatted
+3. **Test with cURL** - Use cURL to isolate issues from your application code
+4. **Check status page** - Verify the API service is operational
+5. **Contact support** - Provide:
+   - Error message and status code
+   - Request details (endpoint, parameters)
+   - API key prefix (first 10 characters)
+   - Timestamp of the error
+
+## Related Documentation
+
+- [API Introduction](/api-reference/introduction) - API overview and patterns
+- [Best Practices](/guides/best-practices) - Integration recommendations
+- [Authentication](/authentication) - Authentication troubleshooting
+

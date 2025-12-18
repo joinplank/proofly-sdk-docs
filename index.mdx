@@ -1,97 +1,102 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "Proofly API Documentation"
+description: "AI-powered API for verifying user profiles and detecting fake accounts"
 ---
 
-## Setting up
+## Welcome
 
-Get your documentation site up and running in minutes.
+Proofly is an AI-powered API service that helps you verify user profiles and detect fake accounts. Our service combines intelligent search algorithms, social graph analysis, and facial recognition to provide accurate profile verification.
 
 <Card
-  title="Start here"
+  title="Get Started"
   icon="rocket"
   href="/quickstart"
   horizontal
 >
-  Follow our three step quickstart guide.
+  Follow our quickstart guide to make your first API call in minutes.
 </Card>
 
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
+## Key Features
 
 <Columns cols={2}>
   <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
+    title="Profile Search"
+    icon="magnifying-glass"
+    href="/api-reference/profile-search"
   >
-    Edit your docs locally and preview them in real time.
+    Find the most accurate Facebook profile matches using intelligent multi-factor search with fuzzy name matching, demographic filters, and facial recognition.
   </Card>
   <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
+    title="Friend Verification"
+    icon="users"
+    href="/api-reference/facebook-friend-check"
   >
-    Customize the design and colors of your site to match your brand.
-  </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+    Verify Facebook friendships and discover mutual connections between profiles for identity verification and social graph analysis.
   </Card>
   <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
-  </Card>
-</Columns>
-
-## Create beautiful pages
-
-Everything you need to create world-class documentation.
-
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
+    title="Photo Verification"
     icon="image"
-    href="/essentials/images"
+    href="/api-reference/profile-photo-verification"
   >
-    Display images and other media.
+    Compare photos against Facebook profile photos using advanced facial recognition to verify identity with confidence scores.
   </Card>
   <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
+    title="Fuzzy Search"
+    icon="wand-magic-sparkles"
+    href="/api-reference/fuzzy-search"
   >
-    Write once and reuse across your docs.
+    Generate intelligent suggestions for names, locations, occupations, and emails to improve search accuracy.
   </Card>
 </Columns>
 
-## Need inspiration?
+## Quick Links
+
+<Columns cols={2}>
+  <Card
+    title="Authentication"
+    icon="key"
+    href="/authentication"
+  >
+    Learn how to authenticate and manage API keys for secure access to our API.
+  </Card>
+  <Card
+    title="SDK Guide"
+    icon="code"
+    href="/guides/sdk"
+  >
+    Use our official SDK to integrate quickly with your application.
+  </Card>
+  <Card
+    title="Error Handling"
+    icon="triangle-exclamation"
+    href="/guides/error-handling"
+  >
+    Understand common errors and how to handle them in your integration.
+  </Card>
+  <Card
+    title="Best Practices"
+    icon="star"
+    href="/guides/best-practices"
+  >
+    Follow our recommendations for optimal integration and performance.
+  </Card>
+</Columns>
+
+## How It Works
+
+Most operations in the Proofly API use an asynchronous job pattern:
+
+1. **Submit a Request** - Send your request to the appropriate endpoint
+2. **Receive Job ID** - Get a job ID for tracking the operation
+3. **Poll for Status** - Check job status until completion
+4. **Get Results** - Retrieve the final results when the job completes
+
+This pattern allows us to handle complex operations that may take time to complete, such as profile searches and friend verifications.
 
 <Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
+  title="View API Reference"
+  icon="book"
+  href="/api-reference/introduction"
 >
-  Browse our showcase of exceptional documentation sites.
+  Explore all available endpoints and their detailed documentation.
 </Card>
