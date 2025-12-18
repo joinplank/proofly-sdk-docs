@@ -21,7 +21,7 @@ jobs:
           repository: joinplank/agent-profile-check
           path: proofly-api
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-          ref: arthursita/plk-607-replace-the-scalar-doc-links-to-mintlify-doc-with-an
+          ref: main
 
       - name: Replace docs content in proofly-sdk-docs
         run: |
