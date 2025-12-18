@@ -23,19 +23,11 @@ jobs:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           ref: arthursita/plk-607-replace-the-scalar-doc-links-to-mintlify-doc-with-an
 
-      - name: Debug - verify source exists
-        run: |
-          ls -la
-          echo "---- proofly-api tree ----"
-          ls -la proofly-api
-          ls -la proofly-api/apps/docs || true
-          ls -la proofly-api/apps/docs/api || true
-
       - name: Replace docs content in proofly-sdk-docs
         run: |
           set -euo pipefail
 
-          test -d proofly-api/apps/docs/api
+          test -d proofly-api/apps/docs/sdk
 
           # clean destination, BUT keep proofly-api so we can copy from it
           find . -mindepth 1 -maxdepth 1 \
@@ -43,7 +35,7 @@ jobs:
             -exec rm -rf {} +
 
           # copy INCLUDING dotfiles
-          cp -R proofly-api/apps/docs/api/. .
+          cp -R proofly-api/apps/docs/sdk/. .
 
           # don't commit the checked-out source repo
           rm -rf proofly-api
