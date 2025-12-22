@@ -1,0 +1,36 @@
+---
+title: "Find Mutual Friends"
+description: "Discover mutual connections between multiple Facebook profiles"
+---
+
+Find mutual friends between two or more Facebook profiles.
+
+## Method
+
+```typescript
+client.findMutualFriends.create(params: FindMutualFriendsCreateParams): Promise<FindMutualFriendCreateResponse>
+```
+
+## Parameters
+
+<ParamField body="userIds" type="string[]" required>
+  Array of Facebook profile IDs. Must contain at least two user IDs to find mutual friends.
+</ParamField>
+
+## Usage
+
+```typescript
+const result = await client.findMutualFriends.create({
+  userIds: [
+    '123456789',
+    '987654321',
+    '111222333'
+  ]
+});
+
+console.log('Mutual friends:', result);
+```
+
+## Response
+
+Returns a `FindMutualFriendCreateResponse` object containing the list of mutual friends.

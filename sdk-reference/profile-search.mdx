@@ -1,0 +1,66 @@
+---
+title: "Profile Search"
+description: "Search for Facebook profiles using intelligent multi-factor matching"
+---
+
+Find the most accurate Facebook profile match using intelligent multi-factor search.
+
+## Method
+
+```typescript
+client.profiles.search(params: ProfileSearchParams): Promise<ProfileSearchResponse>
+```
+
+## Parameters
+
+<ParamField body="name" type="string" required>
+  The name of the person to search for. Minimum 1 character.
+</ParamField>
+
+<ParamField body="email" type="string">
+  Email address associated with the profile (optional).
+</ParamField>
+
+<ParamField body="birthYear" type="number">
+  Birth year (e.g., 1990). Must be between 1900 and current year.
+</ParamField>
+
+<ParamField body="dateOfBirth" type="string">
+  Full date of birth in ISO format (YYYY-MM-DD), e.g., "1990-05-15".
+</ParamField>
+
+<ParamField body="location" type="string">
+  Location to search (city, state, country, etc.). Minimum 2 characters.
+</ParamField>
+
+<ParamField body="subCategory" type="string">
+  Location category: `"hometown"` or `"current"`. Used when location is provided.
+</ParamField>
+
+<ParamField body="photoUrl" type="string">
+  URL of a photo to compare against profile photos for facial recognition matching.
+</ParamField>
+
+<ParamField body="knownAssociates" type="string[]">
+  Array of Facebook profile URLs or IDs of known associates (mutual friends, connections). Maximum 20 items.
+</ParamField>
+
+<ParamField body="additionalInstructions" type="string">
+  Additional instructions to append to the AI prompt for custom search criteria.
+</ParamField>
+
+## Usage
+
+```typescript
+const result = await client.profiles.search({
+  name: 'John Doe',
+  location: 'New York, NY',
+  birthYear: 1990
+});
+
+console.log('Primary match:', result);
+```
+
+## Response
+
+Returns a `ProfileSearchResponse` object.

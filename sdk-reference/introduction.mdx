@@ -1,0 +1,72 @@
+---
+title: "SDK Introduction"
+description: "Overview of the Proofly SDK"
+---
+
+The Proofly SDK provides a typed, easy-to-use interface for the Proofly API. It abstracts away the complexity of HTTP requests, authentication, and asynchronous job polling.
+
+## Authentication
+
+Authentication is handled by passing your API key to the client constructor.
+
+```typescript
+import { PlankProofly } from '@plank-proofly/api';
+
+const client = new PlankProofly({ 
+  apiKey: 'sk_your_api_key_here' 
+});
+```
+
+## Automatic Job Polling
+
+Many operations in the Proofly API are asynchronous (returning a job ID). The SDK automatically handles:
+1. Submitting the job
+2. Polling for status updates
+3. Waiting for completion
+4. Returning the final result
+
+This means you can simply `await` the method call:
+
+```typescript
+// The SDK waits until the job is complete and returns the result
+const result = await client.profiles.search({...});
+```
+
+If you need more control or want to handle polling manually, you can use the polling [configuration options](/quickstart#configuration-options).
+
+## Error Handling
+
+The SDK throws standard Error objects when requests fail. These errors include status codes and messages from the API.
+
+```typescript
+try {
+  await client.profiles.search({...});
+} catch (error) {
+  if (error.status === 429) {
+    // Handle rate limiting
+  } else if (error.status === 401) {
+    // Handle authentication error
+  } else {
+    // Handle other errors
+  }
+}
+```
+
+## Type Safety
+
+The SDK is written in TypeScript and provides full type definitions for all requests and responses. This ensures you always know what parameters are required and what data to expect in return.
+
+## Rate Limits
+
+While the SDK handles the mechanics of requests, the underlying API rate limits still apply.
+
+- **Profile Search**: 10 requests per minute
+- **Friend Check**: 10 requests per minute
+- **Photo Verification**: 10 requests per minute
+- **Fuzzy Search**: 20 requests per minute
+
+If you exceed these limits, the SDK will throw an error with status 429.
+
+## Versioning
+
+The SDK version matches the API version it supports. Ensure you are using the latest version of the SDK to access the latest API features.

@@ -1,0 +1,37 @@
+---
+title: "Build Connection Graph"
+description: "Build a graph of connections for a profile"
+---
+
+Build a comprehensive graph of connections for a specific profile.
+
+## Method
+
+```typescript
+client.profiles.buildConnectionGraph(params: ProfileBuildConnectionGraphParams): Promise<ProfileBuildConnectionGraphResponse>
+```
+
+## Parameters
+
+<ParamField body="profileId" type="string" required>
+  The ID of the profile to build the connection graph for.
+</ParamField>
+
+<ParamField body="depth" type="number">
+  The depth of connections to traverse (default: 1).
+</ParamField>
+
+## Usage
+
+```typescript
+const result = await client.profiles.buildConnectionGraph({
+  profileId: '123456789',
+  depth: 2
+});
+
+console.log(result);
+```
+
+## Response
+
+Returns a `ProfileBuildConnectionGraphResponse` object.

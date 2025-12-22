@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Proofly API Docs",
+  "name": "Proofly SDK Docs",
   "colors": {
     "primary": "#2563EB",
     "light": "#3B82F6",
@@ -11,20 +11,18 @@
   "navigation": {
     "tabs": [
       {
-        "tab": "Getting Started with API",
+        "tab": "Getting Started with SDK",
         "groups": [
           {
             "group": "Introduction",
             "pages": [
               "index",
-              "quickstart",
-              "authentication"
+              "quickstart"
             ]
           },
           {
             "group": "Guides",
             "pages": [
-              "guides/sdk",
               "guides/error-handling",
               "guides/best-practices"
             ]
@@ -32,22 +30,41 @@
         ]
       },
       {
-        "tab": "API Reference",
+        "tab": "SDK Reference",
         "groups": [
           {
-            "group": "Overview",
-            "pages": [
-              "api-reference/introduction"
-            ]
-          },
-          {
-            "group": "Endpoints",
-            "pages": [
-              "api-reference/profile-search",
-              "api-reference/facebook-friend-check",
-              "api-reference/profile-photo-verification",
-              "api-reference/fuzzy-search",
-              "api-reference/jobs"
+            "tab": "SDK Reference",
+            "groups": [
+              {
+                "group": "Overview",
+                "pages": [
+                  "sdk-reference/introduction"
+                ]
+              },
+              {
+                "group": "Facebook",
+                "pages": [
+                  "sdk-reference/get-facebook-friends",
+                  "sdk-reference/check-facebook-friends",
+                  "sdk-reference/find-mutual-friends"
+                ]
+              },
+              {
+                "group": "Profiles",
+                "pages": [
+                  "sdk-reference/profile-search",
+                  "sdk-reference/connection-graph",
+                  "sdk-reference/profile-interactions",
+                  "sdk-reference/verify-profile-photo",
+                  "sdk-reference/search-by-location-occupation"
+                ]
+              },
+              {
+                "group": "Jobs",
+                "pages": [
+                  "sdk-reference/jobs"
+                ]
+              }
             ]
           }
         ]

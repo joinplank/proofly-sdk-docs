@@ -1,0 +1,37 @@
+---
+title: "Search by Location & Occupation"
+description: "Search for profiles based on location and occupation criteria"
+---
+
+Search for profiles that match specific location and occupation criteria.
+
+## Method
+
+```typescript
+client.searchByLocationOccupation.create(params: SearchByLocationOccupationCreateParams): Promise<SearchByLocationOccupationCreateResponse>
+```
+
+## Parameters
+
+<ParamField body="location" type="string" required>
+  The location to search within (e.g., "New York, NY").
+</ParamField>
+
+<ParamField body="occupation" type="string" required>
+  The occupation or job title to search for (e.g., "Software Engineer").
+</ParamField>
+
+## Usage
+
+```typescript
+const result = await client.searchByLocationOccupation.create({
+  location: 'San Francisco, CA',
+  occupation: 'Product Manager'
+});
+
+console.log(result);
+```
+
+## Response
+
+Returns a `SearchByLocationOccupationCreateResponse` object.

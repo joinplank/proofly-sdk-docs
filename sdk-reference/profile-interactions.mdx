@@ -1,0 +1,32 @@
+---
+title: "Profile Interactions"
+description: "Fetch interactions for a profile"
+---
+
+Fetch detailed interaction data for a Facebook profile.
+
+## Method
+
+```typescript
+client.profileInteractions.fetch(params: ProfileInteractionFetchParams): Promise<ProfileInteractionFetchResponse>
+```
+
+## Parameters
+
+<ParamField body="profileId" type="string" required>
+  The ID of the profile to fetch interactions for.
+</ParamField>
+
+## Usage
+
+```typescript
+const result = await client.profileInteractions.fetch({
+  profileId: '123456789'
+});
+
+console.log(result);
+```
+
+## Response
+
+Returns a `ProfileInteractionFetchResponse` object.

@@ -1,0 +1,41 @@
+---
+title: "Check Facebook Friends"
+description: "Verify if specific profiles are friends with a target profile"
+---
+
+Check if a list of candidate profiles are friends with a target Facebook profile.
+
+## Method
+
+```typescript
+client.checkFacebookFriends.create(params: CheckFacebookFriendsCreateParams): Promise<CheckFacebookFriendCreateResponse>
+```
+
+## Parameters
+
+<ParamField body="targetFacebookId" type="string" required>
+  The Facebook profile ID of the target user to check friendships against.
+</ParamField>
+
+<ParamField body="candidateIds" type="string[]" required>
+  Array of Facebook profile IDs to check. Must contain at least one ID.
+</ParamField>
+
+## Usage
+
+```typescript
+const result = await client.checkFacebookFriends.create({
+  targetFacebookId: '123456789',
+  candidateIds: [
+    '987654321',
+    '111222333',
+    '444555666'
+  ]
+});
+
+console.log('Confirmed friends:', result);
+```
+
+## Response
+
+Returns a `CheckFacebookFriendCreateResponse` object containing the confirmed connections.

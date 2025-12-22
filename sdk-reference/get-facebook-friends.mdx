@@ -1,0 +1,32 @@
+---
+title: "Get Facebook Friends"
+description: "Retrieve a list of friends for a target Facebook profile"
+---
+
+Retrieve the friends list of a specific Facebook profile.
+
+## Method
+
+```typescript
+client.getFacebookFriends.create(params: GetFacebookFriendsCreateParams): Promise<GetFacebookFriendCreateResponse>
+```
+
+## Parameters
+
+<ParamField body="url" type="string" required>
+  The URL of the Facebook profile to get friends from.
+</ParamField>
+
+## Usage
+
+```typescript
+const result = await client.getFacebookFriends.create({
+  url: 'https://www.facebook.com/john.doe'
+});
+
+console.log(result);
+```
+
+## Response
+
+Returns a `GetFacebookFriendCreateResponse` object.

@@ -1,226 +1,47 @@
 ---
 title: "Best Practices"
-description: "Recommendations for optimal API integration"
+description: "Recommendations for optimal SDK integration"
 ---
 
-## Overview
-
-Follow these best practices to ensure reliable, efficient, and secure integration with the Proofly API.
+Follow these best practices to ensure reliable, efficient, and secure integration with the Proofly SDK.
 
 ## Authentication & Security
 
 <AccordionGroup>
   <Accordion title="Store API Keys Securely">
-    Never commit API keys to version control. Use environment variables or secure secret management systems:
-    
-    ```bash
-    # .env file (add to .gitignore)
-    API_KEY=sk_your_api_key_here
-    ```
+    Never commit API keys to version control. Use environment variables:
     
     ```typescript
-    const apiKey = process.env.API_KEY;
+    const apiKey = process.env.PROOFLY_API_KEY;
     if (!apiKey) {
-      throw new Error('API_KEY environment variable is required');
+      throw new Error('PROOFLY_API_KEY is required');
     }
+    const client = new PlankProofly({ apiKey });
     ```
   </Accordion>
   
   <Accordion title="Use Different Keys Per Environment">
-    Use separate API keys for development, staging, and production. This allows you to:
-    - Track usage per environment
-    - Rotate keys independently
-    - Revoke access to specific environments if needed
-  </Accordion>
-  
-  <Accordion title="Rotate Keys Regularly">
-    Periodically rotate your API keys (e.g., every 90 days) to minimize risk if a key is compromised. Update keys in a staged rollout:
-    1. Create new key
-    2. Update non-critical services first
-    3. Update critical services
-    4. Delete old key after verification
-  </Accordion>
-  
-  <Accordion title="Monitor Key Usage">
-    Regularly review API key usage through the frontend dashboard. Look for:
-    - Unusual activity patterns
-    - Keys that haven't been used recently (can be safely deleted)
-    - Keys with unexpected usage volumes
-  </Accordion>
-  
-  <Accordion title="Use HTTPS Only">
-    Always make API requests over HTTPS. Never send API keys over unencrypted connections.
+    Use separate API keys for development, staging, and production to track usage and isolate environments.
   </Accordion>
 </AccordionGroup>
 
-## Job Polling
+## Performance Optimization
 
 <AccordionGroup>
-  <Accordion title="Use Appropriate Poll Intervals">
-    Poll job status every 2-5 seconds. Too frequent polling wastes resources; too infrequent delays results.
-    
-    ```typescript
-    const POLL_INTERVAL = 2000; // 2 seconds
-    const MAX_ATTEMPTS = 60; // 2 minutes total
-    
-    async function pollJob(jobId: string) {
-      for (let i = 0; i < MAX_ATTEMPTS; i++) {
-        const status = await checkJobStatus(jobId);
-        if (status.status === 'completed' || status.status === 'failed') {
-          return status;
-        }
-        await sleep(POLL_INTERVAL);
-      }
-      throw new Error('Job polling timeout');
-    }
-    ```
-  </Accordion>
-  
-  <Accordion title="Implement Exponential Backoff">
-    For long-running jobs, consider increasing poll interval over time:
-    
-    ```typescript
-    let pollInterval = 2000; // Start with 2 seconds
-    
-    while (job.status === 'processing') {
-      await checkJobStatus(jobId);
-      pollInterval = Math.min(pollInterval * 1.5, 10000); // Max 10 seconds
-      await sleep(pollInterval);
-    }
-    ```
-  </Accordion>
-  
-  <Accordion title="Set Reasonable Timeouts">
-    Most jobs complete within 30-60 seconds, but set timeouts based on your use case:
-    - Quick operations: 30 seconds
-    - Standard operations: 2 minutes
-    - Complex operations: 5 minutes
-    
-    ```typescript
-    const TIMEOUT = 120000; // 2 minutes
-    const startTime = Date.now();
-    
-    while (Date.now() - startTime < TIMEOUT) {
-      const status = await checkJobStatus(jobId);
-      if (status.status !== 'processing' && status.status !== 'queued') {
-        return status;
-      }
-      await sleep(2000);
-    }
-    ```
-  </Accordion>
-  
-  <Accordion title="Handle All Job Statuses">
-    Implement handling for all possible job statuses:
-    - `queued` - Continue polling
-    - `waiting_for_browser` - Continue polling (may take longer)
-    - `processing` - Continue polling
-    - `completed` - Process results
-    - `failed` - Handle error
-  </Accordion>
-  
-  <Accordion title="Use the SDK">
-    The official SDK handles job polling automatically. Consider using it instead of manual polling:
-    
-    ```typescript
-    import { PlankProofly } from '@plank-proofly/api';
-    
-    const client = new PlankProofly({ apiKey: 'sk_...' });
-    // SDK handles polling automatically
-    const result = await client.profiles.search({ name: 'John Doe' });
-    ```
-  </Accordion>
-</AccordionGroup>
 
-## Rate Limiting
+  
+  <Accordion title="Optimize Profile Search Parameters">
+    Provide as much information as possible (photo, birth year, location) to improve match accuracy and reduce the need for follow-up searches.
+  </Accordion>
 
-<AccordionGroup>
-  <Accordion title="Monitor Rate Limit Headers">
-    Check rate limit headers in responses to avoid hitting limits:
-    
+  <Accordion title="Parallelize Independent Requests">
+    If you need to perform multiple independent searches, run them in parallel:
+
     ```typescript
-    const response = await fetch(url, options);
-    const remaining = parseInt(response.headers.get('X-RateLimit-Remaining') || '0');
-    const resetTime = parseInt(response.headers.get('X-RateLimit-Reset') || '0');
-    
-    if (remaining < 5) {
-      // Slow down requests
-      const waitTime = resetTime - Date.now();
-      await sleep(waitTime);
-    }
-    ```
-  </Accordion>
-  
-  <Accordion title="Implement Request Queuing">
-    For high-volume applications, implement a request queue to manage rate limits:
-    
-    ```typescript
-    class RequestQueue {
-      private queue: Array<() => Promise<any>> = [];
-      private processing = false;
-      private lastRequestTime = 0;
-      private minInterval = 100; // 10 requests per second max
-      
-      async add<T>(request: () => Promise<T>): Promise<T> {
-        return new Promise((resolve, reject) => {
-          this.queue.push(async () => {
-            try {
-              const result = await request();
-              resolve(result);
-            } catch (error) {
-              reject(error);
-            }
-          });
-          this.process();
-        });
-      }
-      
-      private async process() {
-        if (this.processing || this.queue.length === 0) return;
-        this.processing = true;
-        
-        while (this.queue.length > 0) {
-          const now = Date.now();
-          const timeSinceLastRequest = now - this.lastRequestTime;
-          if (timeSinceLastRequest < this.minInterval) {
-            await sleep(this.minInterval - timeSinceLastRequest);
-          }
-          
-          const request = this.queue.shift();
-          if (request) {
-            await request();
-            this.lastRequestTime = Date.now();
-          }
-        }
-        
-        this.processing = false;
-      }
-    }
-    ```
-  </Accordion>
-  
-  <Accordion title="Handle 429 Errors Gracefully">
-    When rate limited, implement exponential backoff:
-    
-    ```typescript
-    async function makeRequestWithRetry(url: string, options: RequestInit, retries = 3) {
-      for (let i = 0; i < retries; i++) {
-        const response = await fetch(url, options);
-        
-        if (response.status === 429) {
-          const retryAfter = response.headers.get('Retry-After');
-          const waitTime = retryAfter 
-            ? parseInt(retryAfter) * 1000 
-            : Math.pow(2, i) * 1000; // Exponential backoff
-          
-          await sleep(waitTime);
-          continue;
-        }
-        
-        return response;
-      }
-      throw new Error('Max retries exceeded');
-    }
+    const [result1, result2] = await Promise.all([
+      client.profiles.search({ name: 'User 1' }),
+      client.profiles.search({ name: 'User 2' })
+    ]);
     ```
   </Accordion>
 </AccordionGroup>
@@ -228,234 +49,47 @@ Follow these best practices to ensure reliable, efficient, and secure integratio
 ## Error Handling
 
 <AccordionGroup>
-  <Accordion title="Implement Comprehensive Error Handling">
-    Handle all error scenarios appropriately:
-    
+  <Accordion title="Handle Specific Errors">
+    Catch errors and handle specific status codes (e.g., 429 for rate limits).
+
     ```typescript
     try {
-      const result = await apiCall();
-    } catch (error) {
-      if (error.status === 400) {
-        // Log and fix invalid parameters
-        logger.error('Invalid request', error);
-        showUserError('Please check your input');
-      } else if (error.status === 401) {
-        // Refresh API key or re-authenticate
-        await refreshApiKey();
-        retry();
-      } else if (error.status === 429) {
-        // Implement backoff and retry
-        await handleRateLimit();
-      } else if (error.status >= 500) {
-        // Retry transient errors
-        await retryWithBackoff();
-      } else {
-        // Log unexpected errors
-        logger.error('Unexpected error', error);
-        showGenericError();
+      await client.profiles.search({...});
+    } catch (err) {
+      if (err.status === 429) {
+        // Handle rate limit
       }
     }
     ```
   </Accordion>
-  
-  <Accordion title="Log Errors for Debugging">
-    Log error details (without sensitive data) for debugging:
-    
-    ```typescript
-    logger.error('API Error', {
-      endpoint: '/api/profiles/search',
-      status: error.status,
-      errorType: error.error,
-      message: error.message,
-      timestamp: new Date().toISOString(),
-      // Don't log API keys or sensitive data
-    });
-    ```
-  </Accordion>
-  
-  <Accordion title="Provide User-Friendly Messages">
-    Translate technical errors into user-friendly messages:
-    
-    ```typescript
-    function getUserFriendlyError(error: ApiError): string {
-      switch (error.error) {
-        case 'Bad Request':
-          return 'Please check your input and try again';
-        case 'Unauthorized':
-          return 'Authentication failed. Please contact support.';
-        case 'Rate Limit Exceeded':
-          return 'Too many requests. Please try again in a moment.';
-        default:
-          return 'Something went wrong. Please try again later.';
-      }
-    }
-    ```
-  </Accordion>
-</AccordionGroup>
 
-## Performance Optimization
-
-<AccordionGroup>
-  <Accordion title="Use Batch Endpoints When Available">
-    Use batch endpoints (e.g., fuzzy search batch) to reduce request count:
-    
-    ```typescript
-    // Instead of multiple requests
-    const result1 = await fuzzySearch({ type: 'name', value: 'John' });
-    const result2 = await fuzzySearch({ type: 'location', value: 'NYC' });
-    
-    // Use batch endpoint
-    const results = await fuzzySearchBatch({
-      requests: [
-        { type: 'name', value: 'John' },
-        { type: 'location', value: 'NYC' }
-      ]
-    });
-    ```
-  </Accordion>
-  
-  <Accordion title="Cache Results When Appropriate">
-    Cache job results to avoid redundant API calls:
-    
-    ```typescript
-    const cache = new Map<string, any>();
-    
-    async function getCachedResult(key: string, fetcher: () => Promise<any>) {
-      if (cache.has(key)) {
-        return cache.get(key);
-      }
-      const result = await fetcher();
-      cache.set(key, result);
-      return result;
-    }
-    ```
-  </Accordion>
-  
-  <Accordion title="Optimize Profile Search Parameters">
-    Provide as much information as possible for better accuracy:
-    - Include name, location, and birth year
-    - Provide photo URL for facial recognition
-    - Include known associates when available
-    
-    This reduces the need for multiple searches.
-  </Accordion>
-</AccordionGroup>
-
-## Data Handling
-
-<AccordionGroup>
-  <Accordion title="Validate Input Before Sending">
-    Validate parameters client-side to avoid unnecessary API calls:
-    
-    ```typescript
-    function validateProfileSearch(params: any): string[] {
-      const errors: string[] = [];
-      if (!params.name || params.name.length < 1) {
-        errors.push('Name is required');
-      }
-      if (params.birthYear && (params.birthYear < 1900 || params.birthYear > new Date().getFullYear())) {
-        errors.push('Invalid birth year');
-      }
-      return errors;
-    }
-    ```
-  </Accordion>
-  
-  <Accordion title="Handle Large Result Sets">
-    When processing large result sets, consider pagination or streaming:
-    
-    ```typescript
-    // Process candidates in batches
-    const BATCH_SIZE = 10;
-    for (let i = 0; i < result.candidates.length; i += BATCH_SIZE) {
-      const batch = result.candidates.slice(i, i + BATCH_SIZE);
-      await processBatch(batch);
-    }
-    ```
-  </Accordion>
-  
-  <Accordion title="Store Job IDs">
-    Store job IDs in your database for tracking and debugging:
-    
-    ```typescript
-    const job = await createJob({
-      type: 'profile_search',
-      jobId: apiResponse.jobId,
-      userId: user.id,
-      status: 'pending'
-    });
-    ```
+  <Accordion title="Log Error Details">
+    Log the error message and status code for debugging.
   </Accordion>
 </AccordionGroup>
 
 ## Testing
 
 <AccordionGroup>
-  <Accordion title="Use Test API Keys">
-    Use separate test API keys for development and testing to avoid affecting production metrics.
-  </Accordion>
-  
-  <Accordion title="Mock API Responses">
-    Mock API responses in unit tests to avoid making real API calls:
-    
+  <Accordion title="Mock the SDK">
+    In your unit tests, mock the SDK client to avoid making real API calls.
+
     ```typescript
     jest.mock('@plank-proofly/api', () => ({
       PlankProofly: jest.fn().mockImplementation(() => ({
         profiles: {
           search: jest.fn().mockResolvedValue({
-            primaryMatch: { facebookId: '123', confidence: 0.9 }
+            primaryMatch: { facebookId: '123', confidence: 0.95 }
           })
         }
       }))
     }));
     ```
   </Accordion>
-  
-  <Accordion title="Test Error Scenarios">
-    Test error handling for all error scenarios:
-    - Invalid API keys
-    - Rate limiting
-    - Network failures
-    - Job failures
-  </Accordion>
-</AccordionGroup>
-
-## Monitoring & Observability
-
-<AccordionGroup>
-  <Accordion title="Track API Usage">
-    Monitor API usage to understand patterns and optimize:
-    - Request volume over time
-    - Success/failure rates
-    - Average job completion times
-    - Rate limit hits
-  </Accordion>
-  
-  <Accordion title="Set Up Alerts">
-    Set up alerts for:
-    - High error rates
-    - Rate limit violations
-    - Unusual usage patterns
-    - Service availability
-  </Accordion>
-  
-  <Accordion title="Log Key Metrics">
-    Log important metrics for analysis:
-    ```typescript
-    logger.info('API Call', {
-      endpoint: '/api/profiles/search',
-      duration: Date.now() - startTime,
-      status: response.status,
-      jobId: response.jobId
-    });
-    ```
-  </Accordion>
 </AccordionGroup>
 
 ## Related Documentation
 
-- [Quickstart Guide](/quickstart) - Get started quickly
+- [Quickstart](/quickstart) - Get started quickly
 - [Error Handling](/guides/error-handling) - Detailed error handling guide
-- [SDK Usage](/guides/sdk) - Using the official SDK
-- [API Reference](/api-reference/introduction) - Complete API documentation
-
+- [SDK Reference](/sdk-reference/introduction) - Complete SDK documentation

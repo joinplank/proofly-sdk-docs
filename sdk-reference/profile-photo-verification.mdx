@@ -1,0 +1,42 @@
+---
+title: "Verify Profile Photo"
+description: "Verify profile photos using advanced facial recognition"
+---
+
+Authenticate identity by comparing a provided photo against all photos from a Facebook profile using advanced facial recognition.
+
+## Method
+
+```typescript
+client.verifyProfilePhoto.verify(params: VerifyProfilePhotoVerifyParams): Promise<VerifyProfilePhotoVerifyResponse>
+```
+
+## Parameters
+
+<ParamField body="photoUrl" type="string" required>
+  URL of the photo to verify. Must be a valid, publicly accessible image URL.
+</ParamField>
+
+<ParamField body="profileUrl" type="string" required>
+  Facebook profile URL to compare against. Must be a valid Facebook profile URL (contains 'facebook.com').
+</ParamField>
+
+<ParamField body="additionalInstructions" type="string">
+  Additional instructions to append to the AI prompt for custom verification criteria.
+</ParamField>
+
+## Usage
+
+```typescript
+const result = await client.verifyProfilePhoto.verify({
+  photoUrl: 'https://example.com/user-photo.jpg',
+  profileUrl: 'https://facebook.com/john.doe',
+  additionalInstructions: 'Focus on facial features and ignore background'
+});
+
+console.log('Match result:', result);
+```
+
+## Response
+
+Returns a `VerifyProfilePhotoVerifyResponse` object.

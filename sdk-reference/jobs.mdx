@@ -1,0 +1,99 @@
+---
+title: "Jobs"
+description: "Check the status of asynchronous jobs and retrieve results"
+---
+
+Retrieve the current status and results of an asynchronous job.  The SDK automatically handles job polling for you, but if you need to manually track a job (e.g. from an Async method), you can use this method.
+
+## Method
+
+```typescript
+client.jobs.retrieveStatus(jobId: string): Promise<JobStatus>
+```
+
+## Parameters
+
+<ParamField body="jobId" type="string" required>
+  The UUID of the job to check.
+</ParamField>
+
+## Usage
+
+```typescript
+const status = await client.jobs.retrieveStatus('550e8400-e29b-41d4-a716-446655440000');
+
+if (status.status === 'completed') {
+  console.log('Results:', status.resultData);
+}
+```
+
+## Response
+
+```typescript
+interface JobStatus {
+  id: string;
+  status: 'queued' | 'processing' | 'completed' | 'failed' | 'waiting_for_browser';
+  jobType: 'profile_search' | 'check_friends' | 'find_mutual_friends' | 'verify_profile_photo';
+  environment: string;
+  resultData?: any;
+  errorMessage?: string;
+  createdAt: string;
+  startedAt: string | null;
+  completedAt: string | null;
+  browserId?: string;
+  browser?: {
+    id: string;
+    kernelBrowserId: string;
+    status: 'idle' | 'busy';
+    lastUsedAt: string | null;
+  };
+}
+```
+
+### Response Fields
+
+<ParamField response="id" type="string">
+  The unique identifier (UUID) of the job.
+</ParamField>
+
+<ParamField response="status" type="string">
+  Current status of the job:
+  - `queued` - Job is waiting to be processed
+  - `waiting_for_browser` - Job is waiting for a browser instance to become available
+  - `processing` - Job is currently being processed
+  - `completed` - Job completed successfully, results available in `resultData`
+  - `failed` - Job failed, error details in `errorMessage`
+</ParamField>
+
+<ParamField response="jobType" type="string">
+  Type of job:
+  - `profile_search` - Profile search operation
+  - `check_friends` - Facebook friend check
+  - `find_mutual_friends` - Mutual friends search
+  - `verify_profile_photo` - Profile photo verification
+</ParamField>
+
+<ParamField response="resultData" type="object">
+  The result data when status is `completed`. Structure varies by job type.
+</ParamField>
+
+<ParamField response="errorMessage" type="string">
+  Error message if status is `failed`, null otherwise.
+</ParamField>
+
+## Job Statuses
+
+### Queued
+Job is waiting in the queue to be processed.
+
+### Waiting for Browser
+Job is waiting for an available browser instance.
+
+### Processing
+Job is actively being processed.
+
+### Completed
+Job finished successfully. Results are available in the `resultData` field.
+
+### Failed
+Job encountered an error. Check the `errorMessage` field for details.
