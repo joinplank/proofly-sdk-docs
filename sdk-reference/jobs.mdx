@@ -3,15 +3,27 @@ title: "Jobs"
 description: "Check the status of asynchronous jobs and retrieve results"
 ---
 
-Retrieve the current status and results of an asynchronous job.  The SDK automatically handles job polling for you, but if you need to manually track a job (e.g. from an Async method), you can use this method.
+## Auto Retrieve Status (Recommended)
 
-## Method
+Automatically polls the job status until it is complete.
+
+```typescript
+client.jobs.autoRetrieveStatus(jobId: string): Promise<JobStatus>
+```
+
+<ParamField body="jobId" type="string" required>
+  The UUID of the job to monitor.
+</ParamField>
+
+## Retrieve Status
+
+Retrieve the current status and results of an asynchronous job. The SDK automatically handles job polling for you with `autoRetrieveStatus`, but if you need to manually track a job (e.g. from an Async method), you can use this method.
 
 ```typescript
 client.jobs.retrieveStatus(jobId: string): Promise<JobStatus>
 ```
 
-## Parameters
+### Parameters
 
 <ParamField body="jobId" type="string" required>
   The UUID of the job to check.
