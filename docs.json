@@ -33,38 +33,33 @@
         "tab": "SDK Reference",
         "groups": [
           {
-            "tab": "SDK Reference",
-            "groups": [
-              {
-                "group": "Overview",
-                "pages": [
-                  "sdk-reference/introduction"
-                ]
-              },
-              {
-                "group": "Facebook",
-                "pages": [
-                  "sdk-reference/get-facebook-friends",
-                  "sdk-reference/check-facebook-friends",
-                  "sdk-reference/find-mutual-friends"
-                ]
-              },
-              {
-                "group": "Profiles",
-                "pages": [
-                  "sdk-reference/profile-search",
-                  "sdk-reference/connection-graph",
-                  "sdk-reference/profile-interactions",
-                  "sdk-reference/verify-profile-photo",
-                  "sdk-reference/search-by-location-occupation"
-                ]
-              },
-              {
-                "group": "Jobs",
-                "pages": [
-                  "sdk-reference/jobs"
-                ]
-              }
+            "group": "Overview",
+            "pages": [
+              "sdk-reference/introduction"
+            ]
+          },
+          {
+            "group": "Facebook",
+            "pages": [
+              "sdk-reference/get-facebook-friends",
+              "sdk-reference/check-facebook-friends",
+              "sdk-reference/find-mutual-friends"
+            ]
+          },
+          {
+            "group": "Profiles",
+            "pages": [
+              "sdk-reference/profile-search",
+              "sdk-reference/connection-graph",
+              "sdk-reference/profile-interactions",
+              "sdk-reference/profile-photo-verification",
+              "sdk-reference/search-by-location-occupation"
+            ]
+          },
+          {
+            "group": "Jobs",
+            "pages": [
+              "sdk-reference/jobs"
             ]
           }
         ]
