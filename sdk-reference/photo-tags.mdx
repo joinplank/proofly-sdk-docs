@@ -1,0 +1,180 @@
+---
+title: "Photo Tags"
+description: "Extract tagged accounts from photos on a Facebook profile"
+---
+
+Extract all tagged accounts from photos on a Facebook profile. This method scans the target profile's photos and identifies all users who have been tagged in those photos.
+
+## Method
+
+```typescript
+client.photoTags.fetch(params: PhotoTagsFetchParams): Promise<PhotoTagsFetchResponse>
+```
+
+## Parameters
+
+<ParamField body="profileId" type="string">
+  Facebook profile ID (numeric or username). Either `profileId` or `profileUrl` is required, but not both.
+</ParamField>
+
+<ParamField body="profileUrl" type="string">
+  Full Facebook profile URL (e.g., "https://facebook.com/john.doe"). Either `profileId` or `profileUrl` is required, but not both.
+</ParamField>
+
+<ParamField body="photoLimit" type="number">
+  Maximum number of photos to scan for tags. Must be between 1 and 50. Defaults to 10.
+</ParamField>
+
+<ParamField body="fbAccountIds" type="string[]">
+  Optional array of Facebook account IDs to filter results. Only tags matching these IDs will be returned.
+</ParamField>
+
+<ParamField body="fbAccountNames" type="string[]">
+  Optional array of Facebook account names to filter results. Only tags matching these names will be returned.
+</ParamField>
+
+## Usage
+
+### Basic Usage
+
+```typescript
+const result = await client.photoTags.fetch({
+  profileUrl: 'https://facebook.com/john.doe',
+  photoLimit: 20
+});
+
+console.log(`Found ${result.tags.length} tagged accounts`);
+console.log(`Scanned ${result.photosScanned} photos`);
+
+for (const tag of result.tags) {
+  console.log(`${tag.name} - ${tag.profileUrl}`);
+}
+```
+
+### With Filtering
+
+```typescript
+// Only return tags matching specific accounts
+const result = await client.photoTags.fetch({
+  profileUrl: 'https://facebook.com/john.doe',
+  photoLimit: 30,
+  fbAccountNames: ['Jane Smith', 'Bob Johnson']
+});
+
+if (result.tags.length > 0) {
+  console.log('Found matching tags:', result.tags);
+} else {
+  console.log('No matching tags found');
+}
+```
+
+### Using Profile ID
+
+```typescript
+const result = await client.photoTags.fetch({
+  profileId: '123456789',
+  photoLimit: 15
+});
+
+console.log(result);
+```
+
+## Response
+
+Returns a `PhotoTagsFetchResponse` object:
+
+```typescript
+interface PhotoTagsFetchResponse {
+  profile: {
+    id?: string;
+    url: string;
+    name?: string;
+    pictureUrl?: string;
+  };
+  tags: Array<{
+    actorId?: string;
+    name?: string;
+    profileUrl?: string;
+    photoUrl: string;
+  }>;
+  photosScanned: number;
+}
+```
+
+### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `profile` | object | Metadata about the target profile |
+| `profile.id` | string | Facebook profile ID |
+| `profile.url` | string | URL to the Facebook profile |
+| `profile.name` | string | Name of the profile (if available) |
+| `profile.pictureUrl` | string | URL to profile picture (if available) |
+| `tags` | array | Array of tagged users found |
+| `tags[].actorId` | string | Facebook ID of the tagged person |
+| `tags[].name` | string | Name of the tagged person |
+| `tags[].profileUrl` | string | URL to the tagged person's profile |
+| `tags[].photoUrl` | string | URL to the photo where the tag was found |
+| `photosScanned` | number | Total number of photos scanned |
+
+## Example Response
+
+```json
+{
+  "profile": {
+    "id": "123456789",
+    "url": "https://facebook.com/john.doe",
+    "name": "John Doe",
+    "pictureUrl": "https://facebook.com/john.doe/picture.jpg"
+  },
+  "tags": [
+    {
+      "actorId": "987654321",
+      "name": "Jane Smith",
+      "profileUrl": "https://facebook.com/jane.smith",
+      "photoUrl": "https://facebook.com/photo.php?fbid=123456"
+    },
+    {
+      "actorId": "555666777",
+      "name": "Bob Johnson",
+      "profileUrl": "https://facebook.com/bob.johnson",
+      "photoUrl": "https://facebook.com/photo.php?fbid=789012"
+    }
+  ],
+  "photosScanned": 20
+}
+```
+
+## Error Handling
+
+```typescript
+try {
+  const result = await client.photoTags.fetch({
+    profileUrl: 'https://facebook.com/john.doe'
+  });
+  console.log(result);
+} catch (error) {
+  if (error.code === 'INVALID_PARAMETERS') {
+    console.error('Invalid parameters:', error.message);
+  } else if (error.code === 'PROFILE_NOT_FOUND') {
+    console.error('Profile not found');
+  } else {
+    console.error('Unexpected error:', error);
+  }
+}
+```
+
+## Notes
+
+- The target profile owner is automatically excluded from the tags list
+- Facebook Pages and hashtags are filtered out from results
+- Results depend on the privacy settings of the target profile
+- Private photos may not be accessible
+- Maximum of 50 photos can be scanned per request
+
+## Related Methods
+
+- [Profile Interactions](/sdk-reference/profile-interactions) - Get likes and comments from posts
+- [Profile Search](/sdk-reference/profile-search) - Find profiles by name
+- [Check Facebook Friends](/sdk-reference/check-facebook-friends) - Verify friendship status
+

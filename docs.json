@@ -52,6 +52,7 @@
               "sdk-reference/profile-search",
               "sdk-reference/connection-graph",
               "sdk-reference/profile-interactions",
+              "sdk-reference/photo-tags",
               "sdk-reference/profile-photo-verification",
               "sdk-reference/search-by-location-occupation"
             ]
