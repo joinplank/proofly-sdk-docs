@@ -38,7 +38,11 @@ client.profiles.search(params: ProfileSearchParams): Promise<ProfileSearchRespon
 </ParamField>
 
 <ParamField body="photoUrl" type="string">
-  URL of a photo to compare against profile photos for facial recognition matching.
+  URL of a photo to compare against profile photos for facial recognition matching. **Provide either photoUrl or photoBase64, but not both.**
+</ParamField>
+
+<ParamField body="photoBase64" type="string">
+  Base64-encoded image data URI (e.g., `data:image/jpeg;base64,...`). **Provide either photoUrl or photoBase64, but not both.**
 </ParamField>
 
 <ParamField body="knownAssociates" type="string[]">
