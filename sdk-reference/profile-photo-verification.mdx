@@ -13,8 +13,12 @@ client.verifyProfilePhoto.verify(params: VerifyProfilePhotoVerifyParams): Promis
 
 ## Parameters
 
-<ParamField body="photoUrl" type="string" required>
-  URL of the photo to verify. Must be a valid, publicly accessible image URL.
+<ParamField body="photoUrl" type="string">
+  URL of the photo to verify. Must be a valid, publicly accessible image URL. **Provide either `photoUrl` or `photoBase64`, but not both.**
+</ParamField>
+
+<ParamField body="photoBase64" type="string">
+  Base64-encoded image data URI (e.g., `data:image/jpeg;base64,...`). Use this when you have the image data directly instead of a URL. **Provide either `photoUrl` or `photoBase64`, but not both.**
 </ParamField>
 
 <ParamField body="profileUrl" type="string" required>
@@ -27,11 +31,34 @@ client.verifyProfilePhoto.verify(params: VerifyProfilePhotoVerifyParams): Promis
 
 ## Usage
 
+### Using Photo URL
+
 ```typescript
 const result = await client.verifyProfilePhoto.verify({
   photoUrl: 'https://example.com/user-photo.jpg',
   profileUrl: 'https://facebook.com/john.doe',
   additionalInstructions: 'Focus on facial features and ignore background'
+});
+
+console.log('Match result:', result);
+```
+
+### Using Base64 Image
+
+```typescript
+// Convert file to base64
+const fileToBase64 = (file: File): Promise<string> => new Promise((resolve, reject) => {
+  const reader = new FileReader();
+  reader.readAsDataURL(file);
+  reader.onload = () => resolve(reader.result as string);
+  reader.onerror = reject;
+});
+
+const photoBase64 = await fileToBase64(imageFile);
+
+const result = await client.verifyProfilePhoto.verify({
+  photoBase64,
+  profileUrl: 'https://facebook.com/john.doe'
 });
 
 console.log('Match result:', result);
