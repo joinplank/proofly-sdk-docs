@@ -60,11 +60,13 @@ Let's start with a simple profile search. The SDK handles job creation and polli
 try {
   const result = await client.profiles.search({
     name: 'John Doe',
-    location: 'New York, NY',
+    currentLocation: 'New York, NY',
+    originLocation: 'Boston, MA',
     birthYear: 1990
   });
 
-  console.log('Results:', result);
+  console.log('Primary match:', result.primaryMatch);
+  console.log('All candidates:', result.candidates);
 } catch (error) {
   console.error('Error:', error);
 }
@@ -79,7 +81,8 @@ import { PlankProofly, ProfileSearchResult } from '@plank-proofly/api';
 
 const searchParams = {
   name: 'John Doe',
-  location: 'New York, NY'
+  currentLocation: 'New York, NY',
+  originLocation: 'Boston, MA'
 };
 
 const result: ProfileSearchResult = await client.profiles.search(searchParams);

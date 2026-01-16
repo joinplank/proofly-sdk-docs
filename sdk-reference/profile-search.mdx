@@ -3,7 +3,7 @@ title: "Profile Search"
 description: "Search for Facebook profiles using intelligent multi-factor matching"
 ---
 
-Find the most accurate Facebook profile match using intelligent multi-factor search.
+Find the most accurate Facebook profile match using intelligent multi-factor search. Results include extracted information such as work history, education, family members, and contact information when available.
 
 ## Method
 
@@ -29,42 +29,250 @@ client.profiles.search(params: ProfileSearchParams): Promise<ProfileSearchRespon
   Full date of birth in ISO format (YYYY-MM-DD), e.g., "1990-05-15".
 </ParamField>
 
-<ParamField body="location" type="string">
-  Location to search (city, state, country, etc.). Minimum 2 characters.
+<ParamField body="currentLocation" type="string" optional>
+  Current location (can be a city, state, or country). Minimum 2 characters.
 </ParamField>
 
-<ParamField body="subCategory" type="string">
-  Location category: `"hometown"` or `"current"`. Used when location is provided.
+<ParamField body="originLocation" type="string" optional>
+  Origin location (can be a city, state, or country) - represents hometown, birthplace, or place of origin. Minimum 2 characters.
 </ParamField>
 
-<ParamField body="photoUrl" type="string">
+<ParamField body="photoUrl" type="string" optional>
   URL of a photo to compare against profile photos for facial recognition matching. **Provide either photoUrl or photoBase64, but not both.**
 </ParamField>
 
-<ParamField body="photoBase64" type="string">
+<ParamField body="photoBase64" type="string" optional>
   Base64-encoded image data URI (e.g., `data:image/jpeg;base64,...`). **Provide either photoUrl or photoBase64, but not both.**
 </ParamField>
 
-<ParamField body="knownAssociates" type="string[]">
-  Array of Facebook profile URLs or IDs of known associates (mutual friends, connections). Maximum 20 items.
+<ParamField body="knownAssociates" type="KnownAssociate[]" optional>
+  Array of known associates. Each entry must include at least a `name` or `facebookProfileId`. Maximum 20 items.
 </ParamField>
 
-<ParamField body="additionalInstructions" type="string">
+<ParamField body="knownAssociates[].name" type="string" optional>
+  Name of the known associate (required if `facebookProfileId` is not provided).
+</ParamField>
+
+<ParamField body="knownAssociates[].relationship" type="string" optional>
+  Relationship to the target person (e.g., "wife", "friend", "colleague"). Defaults to "friend".
+</ParamField>
+
+<ParamField body="knownAssociates[].facebookProfileId" type="string" optional>
+  Facebook profile ID of the associate (required if `name` is not provided).
+</ParamField>
+
+<ParamField body="minConfidenceScore" type="number" optional>
+  Minimum confidence score threshold for filtering results (0.0 to 1.0).
+</ParamField>
+
+<ParamField body="weights" type="ProfileSearchWeights" optional>
+  Optional per-field weighting configuration (0.0 to 1.0 per field). Fields not present in the request are ignored when applying weights.
+</ParamField>
+
+<ParamField body="weights.name" type="number" optional>
+  Relative importance for matching on full name (0.0 to 1.0).
+</ParamField>
+
+<ParamField body="weights.email" type="number" optional>
+  Relative importance for matching on email (0.0 to 1.0).
+</ParamField>
+
+<ParamField body="weights.birthYear" type="number" optional>
+  Relative importance for matching on birth year (0.0 to 1.0).
+</ParamField>
+
+<ParamField body="weights.dateOfBirth" type="number" optional>
+  Relative importance for matching on full date of birth (0.0 to 1.0).
+</ParamField>
+
+<ParamField body="weights.currentLocation" type="number" optional>
+  Relative importance for matching on current location (0.0 to 1.0).
+</ParamField>
+
+<ParamField body="weights.originLocation" type="number" optional>
+  Relative importance for matching on origin location (0.0 to 1.0).
+</ParamField>
+
+<ParamField body="weights.photoUrl" type="number" optional>
+  Relative importance for using the reference photo / image signals (0.0 to 1.0).
+</ParamField>
+
+<ParamField body="weights.knownAssociates" type="number" optional>
+  Relative importance for using known associates / social graph signals (0.0 to 1.0).
+</ParamField>
+
+<ParamField body="additionalInstructions" type="string" optional>
   Additional instructions to append to the AI prompt for custom search criteria.
 </ParamField>
 
 ## Usage
 
-```typescript
+<CodeGroup>
+
+```typescript TypeScript
+// Basic search
 const result = await client.profiles.search({
   name: 'John Doe',
-  location: 'New York, NY',
+  currentLocation: 'New York, NY',
+  originLocation: 'Boston, MA',
   birthYear: 1990
 });
 
-console.log('Primary match:', result);
+console.log('Primary match:', result.primaryMatch);
+console.log('Candidates:', result.candidates);
 ```
+
+```typescript TypeScript
+// Advanced search with known associates and weights
+const result = await client.profiles.search({
+  name: 'John Doe',
+  email: 'john.doe@example.com',
+  currentLocation: 'New York, NY',
+  originLocation: 'Boston, MA',
+  birthYear: 1990,
+  photoUrl: 'https://example.com/photo.jpg',
+  knownAssociates: [
+    {
+      name: 'Jane Smith',
+      relationship: 'friend',
+      facebookProfileId: '123456789'
+    },
+    {
+      name: 'Bob Johnson',
+      relationship: 'colleague'
+    }
+  ],
+  minConfidenceScore: 0.7,
+  weights: {
+    name: 0.8,
+    currentLocation: 0.6,
+    photoUrl: 0.9
+  }
+});
+
+console.log('Primary match:', result.primaryMatch);
+console.log('All candidates:', result.candidates);
+console.log('Connections:', result.connections);
+```
+
+```typescript TypeScript
+// Using photoBase64 instead of photoUrl
+const result = await client.profiles.search({
+  name: 'John Doe',
+  currentLocation: 'San Francisco, CA',
+  photoBase64: 'data:image/jpeg;base64,/9j/4AAQSkZJRg...',
+  minConfidenceScore: 0.8
+});
+```
+
+</CodeGroup>
 
 ## Response
 
-Returns a `ProfileSearchResponse` object.
+Returns a `ProfileSearchResponse` object with the following structure:
+
+```typescript
+interface ProfileSearchResponse {
+  primaryMatch?: ProfileCandidate;
+  candidates: ProfileCandidate[];
+  connections: ProfileConnectionEdge[];
+}
+
+interface ProfileCandidate {
+  facebookId: string;
+  fullName: string;
+  profileUrl: string;
+  currentLocation?: string;
+  originLocation?: string;
+  photoUrl?: string;
+  birthYear?: number;
+  birthday?: string;
+  email?: string;
+  confidence: number; // 0-1 scale
+  matchedSignals: string[];
+  imageMatch?: {
+    isSamePerson: boolean;
+    confidence: number; // 0-100
+    message?: string;
+  };
+  connections: ProfileConnectionEdge[];
+  knownAssociateMatches?: KnownAssociateMatch[];
+  family?: FamilyMember[];
+  workEducation?: WorkEducationEntry[];
+}
+
+interface WorkEducationEntry {
+  type: 'work' | 'education';
+  organization: string;
+  status?: 'current' | 'past';
+}
+
+interface FamilyMember {
+  name?: string;
+  relationship?: string;
+  profileUrl?: string;
+  facebookId?: string;
+}
+
+interface ProfileConnectionEdge {
+  fromId: string;
+  toId: string;
+  fromUrl: string;
+  toUrl: string;
+  relationship: ProfileConnectionType;
+  toName?: string | null;
+}
+
+type ProfileConnectionType =
+  | 'mutual_friend'
+  | 'follower'
+  | 'following'
+  | 'friend'
+  | 'friend_college'
+  | 'friend_high_school'
+  | 'friend_current_city'
+  | 'friend_hometown'
+  | 'friend_work';
+```
+
+### Example Response
+
+```typescript
+{
+  primaryMatch: {
+    facebookId: "123456789",
+    fullName: "John Doe",
+    profileUrl: "https://facebook.com/john.doe",
+    currentLocation: "New York, NY",
+    originLocation: "Boston, MA",
+    confidence: 0.95,
+    matchedSignals: [
+      "name_match",
+      "current_location_match",
+      "origin_location_match",
+      "photo_match"
+    ],
+    imageMatch: {
+      isSamePerson: true,
+      confidence: 92,
+      message: "High confidence match based on facial features"
+    },
+    connections: [...],
+    knownAssociateMatches: [...],
+    workEducation: [
+      {
+        type: 'work',
+        organization: 'Acme Corp',
+        status: 'current'
+      },
+      {
+        type: 'education',
+        organization: 'MIT',
+        status: 'past'
+      }
+    ]
+  },
+  candidates: [...],
+  connections: [...]
+}
+```
